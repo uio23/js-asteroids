@@ -1,2 +1,2 @@
 # js-asteroids
-Based on tutorial for a js asteroid game
+Based off a tutorial for js asteroid game
