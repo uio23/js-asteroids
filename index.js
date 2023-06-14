@@ -86,17 +86,42 @@ class Player {
         // Update rotation based on rotation speed change
         this.rotation += this.rotation_speed;
 
+
+        // Calculate distances from center of spaceship relative to canvas x & y
+        var pointADistance = Math.cos(this.rotation) * 30;
+        var pointBDistance = Math.cos(Math.PI - this.rotation + 2.35619) * Math.sqrt(Math.pow(10, 2)*2);
+        var pointCDistance = Math.cos(Math.PI + this.rotation + 2.35619) * Math.sqrt(Math.pow(10, 2)*2);
+
         // Re-spawn player on opposite edge of screen if player exits screen
-        if (this.position.x > canvas.width) {
-            this.position.x = 0;
-        } else if (this.position.x < 0) {
-            this.position.x = canvas.width;
+        if (
+            this.position.x + pointADistance  > canvas.width &&
+            this.position.x - pointBDistance  > canvas.width && 
+            this.position.x - pointCDistance  > canvas.width
+            ) {
+            this.position.x = 0 - Math.max(pointADistance, pointBDistance, pointCDistance);
+        } else if (
+            this.position.x + pointADistance  < 0 &&
+            this.position.x - pointBDistance  < 0 && 
+            this.position.x - pointCDistance  < 0
+            ) {
+                this.position.x = canvas.width + Math.min(pointADistance, pointBDistance, pointCDistance);
         }
 
-        if (this.position.y > canvas.height) {
-            this.position.y = 0;
-        } else if (this.position.y < 0) {
-            this.position.y = canvas.height;
+        if (
+            this.position.y + pointADistance  > canvas.height &&
+            this.position.y - pointBDistance  > canvas.height && 
+            this.position.y - pointCDistance  > canvas.height
+            ) {
+                console.log(pointADistance);
+                console.log(pointBDistance)
+                console.log(pointCDistance);
+            this.position.y = 0 - Math.max(pointADistance, pointBDistance, pointCDistance);
+        } else if (
+            this.position.y + pointADistance  < 0 &&
+            this.position.y - pointBDistance  < 0 && 
+            this.position.y - pointCDistance  < 0
+        ) {
+            this.position.y = canvas.height - Math.min(pointADistance, pointBDistance, pointCDistance);
         }
     }
 }
