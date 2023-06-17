@@ -33,19 +33,20 @@ class Boost {
     constructor(absolutePosition) {
         this.absolutePosition = absolutePosition;
         this.radius = 20;
+        this.color = 'green';
     }
 
     draw (position) {
         ctx.beginPath();
         ctx.arc(position.x, position.y, this.radius, 0, Math.PI * 2, false);
         ctx.closePath();
-        ctx.fillStyle = 'green';
+        ctx.fillStyle = this.color;
         ctx.fill();
     }
 }
 
 const boosts = []
-for (let i = 0; i <= 10; i++) {
+for (let i = 0; i <= 19; i++) {
     boosts.push(new Boost({
         x: Math.random() * WIDTH,
         y: Math.random() * HEIGHT
@@ -56,7 +57,7 @@ for (let i = 0; i <= 10; i++) {
 class Player {
     constructor({position, velocity}) {
         this.position = position; // {x, y}
-        this.absolutePosition = {x: 1000, y: 1000};
+        this.absolutePosition = {x: WIDTH / 2, y: HEIGHT / 2};
         this.velocity = velocity; // {x, y}
         this.rotation = 0; // Radians
         this.rotation_speed = 0; // Radians
@@ -112,24 +113,27 @@ class Player {
     update() {
         this.draw();
 
-       
-        if (!(OFFSET >= this.absolutePosition.x + this.velocity.x || this.absolutePosition.x + this.velocity.x >= WIDTH - OFFSET)) {
-            if ((this.absolutePosition.x + canvas.width / 2 >= WIDTH) || this.absolutePosition.x - canvas.width / 2 <= 0) {
-                this.position.x += this.velocity.x;
-            }
-            this.absolutePosition.x += this.velocity.x; 
-        } else {
-            this.velocity.x = 0;
-        }
+       this.absolutePosition.x += this.velocity.x; 
+       this.absolutePosition.y += this.velocity.y; 
+
+       // Messes up absolute position for now...
+        //if (!(OFFSET >= this.absolutePosition.x + this.velocity.x || this.absolutePosition.x + this.velocity.x >= WIDTH - OFFSET)) {
+          //  if ((this.absolutePosition.x + canvas.width / 2 >= WIDTH) || this.absolutePosition.x - canvas.width / 2 <= 0) {
+            //    this.position.x += this.velocity.x;
+            //}
+            //this.absolutePosition.x += this.velocity.x; 
+        //} else {
+          //  this.velocity.x = 0;
+        //}
         
-        if (!(OFFSET >= this.absolutePosition.y + this.velocity.y || this.absolutePosition.y + this.velocity.y >= HEIGHT - OFFSET)) {
-            if ((this.absolutePosition.y + canvas.height / 2 >= HEIGHT) || this.absolutePosition.y - canvas.height / 2 <= 0) {
-                this.position.y += this.velocity.y;
-            }
-            this.absolutePosition.y += this.velocity.y; 
-        } else {
-            this.velocity.y = 0;
-        }
+        //if (!(OFFSET >= this.absolutePosition.y + this.velocity.y || this.absolutePosition.y + this.velocity.y >= HEIGHT - OFFSET)) {
+          //  if ((this.absolutePosition.y + canvas.height / 2 >= HEIGHT) || this.absolutePosition.y - canvas.height / 2 <= 0) {
+            //    this.position.y += this.velocity.y;
+            //}
+            //this.absolutePosition.y += this.velocity.y; 
+        //} else {
+          //  this.velocity.y = 0;
+        // }
 
 
         // Update rotation based on rotation speed change
@@ -150,6 +154,9 @@ class Player {
 
 
             boost.draw({x: distanceToViewX, y: distanceToViewY});
+            miniMap.drawItem(boost, distancesToPlayerX , distancesToPlayerY)
+            
+
 
             if (keys.i.toggled) {
             ctx.fillStyle = "white";
@@ -252,7 +259,108 @@ class AmmoBar {
     }
 }
 
+miniMapScales = [
+    {
+        x: canvas.width,
+        y: canvas.height
+    },
+    {
+        x: canvas.width * 2,
+        y: canvas.height * 2
+    },
+    {
+        x: WIDTH / 2,
+        y: HEIGHT / 2
+    },
+    {
+        x: WIDTH,
+        y: HEIGHT
+    }
+]
 
+
+class MiniMap {
+    constructor({offset, width}) {
+        this.actualSize = miniMapScales[0];
+        this.scale = width / this.actualSize.x
+        this.size = {
+            x: width,
+            y: this.actualSize.y * this.scale
+        }
+        this.position = {
+            x: canvas.width - (this.size.x + offset.x),
+            y: offset.y
+        }
+    }
+
+    updateActualSize(newActualSize) {
+        this.actualSize = newActualSize;
+        this.scale = this.size.x / this.actualSize.x
+        this.size.y = this.actualSize.y * this.scale
+    }
+
+    draw () {
+        
+
+        ctx.fillStyle = 'black';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
+        ctx.strokeRect(this.position.x, this.position.y, this.size.x, this.size.y);
+
+
+        var playerX, playerY;
+
+        if (this.actualSize.x == WIDTH && this.actualSize.y == HEIGHT) {
+            playerX = player.absolutePosition.x * this.scale + this.position.x;
+            playerY = player.absolutePosition.y * this.scale + this.position.y;
+        } else {
+            playerX = this.position.x + this.size.x / 2;
+            playerY = this.position.y + this.size.y / 2;
+        }
+
+        let playerRadius = 50 * this.scale;
+
+        ctx.beginPath();
+        ctx.arc(playerX, playerY, playerRadius, 0, Math.PI * 2, false);
+        ctx.closePath();
+        ctx.fillStyle = 'white';
+        ctx.fill();
+    }
+
+    drawItem(item, x, y) {
+        var itemX, itemY;
+        var itemRadius = item.radius * this.scale;
+
+
+        if (this.actualSize.x == WIDTH && this.actualSize.y == HEIGHT) {
+            itemX = item.absolutePosition.x * this.scale + this.position.x;
+            itemY = item.absolutePosition.y * this.scale + this.position.y;
+        } else {
+            if (Math.abs(x * this.scale) <= this.size.x / 2 && Math.abs(y * this.scale) <= this.size.y / 2) {
+                itemX = (x * this.scale) + (this.position.x + this.size.x / 2) ;
+                itemY = (y * this.scale) + (this.position.y + this.size.y / 2);
+
+
+                ctx.beginPath();
+                ctx.arc(itemX, itemY, itemRadius, 0, Math.PI * 2, false);
+                ctx.closePath();
+                ctx.fillStyle = item.color;
+                ctx.fill();
+            }
+        }
+        ctx.beginPath();
+        ctx.arc(itemX, itemY, itemRadius, 0, Math.PI * 2, false);
+        ctx.closePath();
+        ctx.fillStyle = item.color;
+        ctx.fill();
+    }
+}
+
+const miniMap = new MiniMap({
+    offset: {x: 50, y: 50},
+    width: canvas.width / 5
+})
 
 
 // Create still player in center of canvas
@@ -261,6 +369,8 @@ const player = new Player({
     velocity: {x: 0, y: 0}
 });
 
+const players = []
+players.push(player)
 
 // Create an ammoBar with an ammo-weight of 2%
 const ammoBar = new AmmoBar({
@@ -272,7 +382,7 @@ const ammoBar = new AmmoBar({
         width: 100,
         height: 200
     },
-    ammoWeight: 0.005
+    ammoWeight: 0.05
 });
 
 
@@ -298,7 +408,19 @@ const keys = {
     },
     space: {
         pressed: false
-    }
+    },
+    digitOne: {
+        toggled: false
+    },
+    digitTwo: {
+        toggled: false
+    },
+    digitThree: {
+        toggled: false
+    },
+    digitFour: {
+        toggled: false
+    },
 }
 
 
@@ -312,7 +434,7 @@ function animate() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-
+    miniMap.draw();
     player.update();
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
@@ -330,6 +452,7 @@ function animate() {
 
 
     ammoBar.draw();
+    
 
 
     // ...based on key-map states...
@@ -388,6 +511,16 @@ function animate() {
         ctx.fillText("R.C.S OFF", canvas.width/2, canvas.height -50);
     }
 
+    if (keys.digitOne.toggled) {
+        miniMap.updateActualSize(miniMapScales[0]);
+    } else if (keys.digitTwo.toggled) {
+        console.log('h');
+        miniMap.updateActualSize(miniMapScales[1]);
+    } else if (keys.digitThree.toggled) {
+        miniMap.updateActualSize(miniMapScales[2]);
+    } else if (keys.digitFour.toggled) {     
+        miniMap.updateActualSize(miniMapScales[3]);
+    }
 }
 
 
@@ -434,6 +567,30 @@ window.addEventListener('keydown', (event) => {
             break;
         case 'KeyI':
             keys.i.toggled = !keys.i.toggled;
+            break;
+        case 'Digit1':
+            keys.digitOne.toggled = true;
+            keys.digitTwo.toggled = false;
+            keys.digitThree.toggled = false;
+            keys.digitFour.toggled = false;
+            break;
+        case 'Digit2':
+            keys.digitTwo.toggled = true;
+            keys.digitOne.toggled = false;
+            keys.digitThree.toggled = false;
+            keys.digitFour.toggled = false;
+            break;
+        case 'Digit3':
+            keys.digitThree.toggled = true;
+            keys.digitTwo.toggled = false;
+            keys.digitOne.toggled = false;
+            keys.digitFour.toggled = false;
+            break;
+        case 'Digit4':
+            keys.digitFour.toggled = true;
+            keys.digitTwo.toggled = false;
+            keys.digitThree.toggled = false;
+            keys.digitOne.toggled = false;
             break;
     }
 });
