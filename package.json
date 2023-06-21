@@ -1,0 +1,15 @@
+{
+  "name": "asteroids",
+  "version": "1.0.0",
+  "description": "Based off a tutorial for js asteroid game",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alexander Kashpir",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io": "^4.6.2",
+    "socketio": "^1.0.0"
+  }
+}
