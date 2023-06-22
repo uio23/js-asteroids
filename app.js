@@ -1,16 +1,22 @@
-const express = require('express');
 const path = require("path");
-const app = express();
 const http = require('http');
+
+const express = require('express');
+const app = express();
+app.use(express.static(path.join(__dirname, 'public')))
+
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
-
-const AmmoBoost = require('./ammoBoost');
 const Player = require('./player');
-const gameConfiguration = require('./gameConfiguration');
+const AmmoBoost = require('./ammoBoost');
 const Projectile = require('./projectile');
+
+const gameConfiguration = require('./gameConfiguration');
+
+
+
 
 
 const players = []
@@ -39,7 +45,6 @@ for (let i = 1; i < 20; i++) {
 }
 
 
-app.use(express.static(path.join(__dirname, 'public')))
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
@@ -60,11 +65,19 @@ io.on('connection', (socket) => {
   socket.broadcast.emit('playerJoined', socket.id + " joined!");
   
 
+    socket.on('canvasCenter', canvasCenter => {
 
+        players.forEach((player, index) => {
+            if (player.id == socket.id) {
+                player.position = canvasCenter;
+            }
+        });
+    });
 
     socket.on('frame', keys => {
         players.forEach((player, index) => {
             if (player.id == socket.id) {
+
                 player.update();
 
 
@@ -131,28 +144,32 @@ io.on('connection', (socket) => {
                     }
                 }
 
-                if (keys.space.pressed) {
-                    projectiles.push(new Projectile({
-                        position: {
-                            x: player.position.x + Math.cos(player.rotation) * 30,
-                            y: player.position.y + Math.sin(player.rotation) * 30
-                        },
-                        velocity: {
-                            x: Math.cos(player.rotation) * gameConfiguration.projectile_speed + player.velocity.x,
-                            y: Math.sin(player.rotation) * gameConfiguration.projectile_speed + player.velocity.y
-                        },
-                        absolutePosition: {
-                            x: player.absolutePosition.x + Math.cos(player.rotation) * 30,
-                            y: player.absolutePosition.y + Math.sin(player.rotation) * 30
-                        },
-                        id: player.id
-                    }));
-                    player.ammo -= 1;
+                if (keys.space.pressed && !keys.space.used) {
+                    if (player.ammo > 0) {
+                        projectiles.push(new Projectile({
+                            position: {
+                                x: player.position.x + Math.cos(player.rotation) * 30,
+                                y: player.position.y + Math.sin(player.rotation) * 30
+                            },
+                            velocity: {
+                                x: Math.cos(player.rotation) * gameConfiguration.projectile_speed + player.velocity.x,
+                                y: Math.sin(player.rotation) * gameConfiguration.projectile_speed + player.velocity.y
+                            },
+                            absolutePosition: {
+                                x: player.absolutePosition.x + Math.cos(player.rotation) * 30,
+                                y: player.absolutePosition.y + Math.sin(player.rotation) * 30
+                            },
+                            id: player.id
+                        }));
+                        player.ammo -= 1;
+                    }
+                    
                 }
 
             }
         });
     socket.emit('sprites', {players: players, ammoBoosts: ammoBoosts, projectiles: projectiles});
+    
   });
 
 

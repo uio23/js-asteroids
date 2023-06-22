@@ -49,6 +49,7 @@ socket.on('sprites', sprites => {
 
 socket.on('connect', () => {
     thisPlayerId = socket.id;
+    socket.emit('canvasCenter', {x: canvas.width / 2, y: canvas.height / 2});
 });
 
 socket.on('config', config => {
@@ -56,12 +57,13 @@ socket.on('config', config => {
     miniMapScales = config.miniMapScales;
     players = config.players;
 
-
     players.forEach(player => {
         if (player.id == thisPlayerId) {
             thisPlayer = player;
         }
     });
+
+    
 
 
     miniMap = new MiniMap({
@@ -69,7 +71,6 @@ socket.on('config', config => {
         width: canvas.width / 5,
         miniMapScales: miniMapScales
     })
-    console.log(miniMap)
     
     // Create an ammoBar with an ammo-weight of 2%
     ammoBar = new AmmoBar({
@@ -82,9 +83,9 @@ socket.on('config', config => {
             height: 200
         }
     });
+    
 });
 
-console.log(miniMap)
 
 
 
@@ -102,7 +103,8 @@ const keys = {
         pressed: false
     },
     space: {
-        pressed: false
+        pressed: false,
+        used: false
     },
     r: {
         toggled: false
@@ -119,16 +121,22 @@ function animate() {
     // Re-run function constantley
     window.requestAnimationFrame(animate);
 
+
     // Clear canvas
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-
     socket.emit('frame', keys);
+    if (keys.space.pressed) {
+        keys.space.used = true;
+    }
+    
+
 
 
     miniMap.draw(ctx, thisPlayer);
     ammoBar.draw(ctx, thisPlayer);
+
     
     
 
@@ -148,6 +156,7 @@ function animate() {
             Artist.drawThisPlayer(ctx, canvas, player);
         }
     }
+    
 
     for (let i = ammoBoosts.length - 1; i >= 0; i--) {
         const boost = ammoBoosts[i];
@@ -164,10 +173,10 @@ function animate() {
             Math.abs(distanceToViewY) + boost.radius <= canvas.height) {
                 Artist.drawBoost(ctx, boost, {x: distanceToViewX, y: distanceToViewY});
         }
-        console.log('drawing')
         miniMap.drawItem(boost, {x: distancesToPlayerX, y:distancesToPlayerY});
 
     }
+    
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
         const projectile = ammoBoosts[i];
@@ -186,6 +195,7 @@ function animate() {
             
         }        
     }
+    
 
     // Loop to draw messages
     for (let i = messages.length - 1; i >= 0; i--) { 
@@ -199,8 +209,8 @@ function animate() {
         }
     }  
     
-}
 
+}
 
 
 
@@ -220,7 +230,6 @@ window.addEventListener('keydown', (event) => {
             // Stop anoyying spacebar scroll
             event.preventDefault();
 
-
             if (!keys.space.pressed) {
                 keys.space.pressed = true;
             }
@@ -237,22 +246,12 @@ window.addEventListener('keydown', (event) => {
         case 'Digit1':
             keys.digit.value = 0;
 
-            keys.numberChange = true;
+            keys.digitChange = true;
             break;
         case 'Digit2':
-            keys.digit.value = 2;
+            keys.digit.value = 1;
 
-            keys.numberChange = true;
-            break;
-        case 'Digit3':
-            keys.digit.value = 3;
-
-            keys.numberChange = true;
-            break;
-        case 'Digit4':
-            keys.digit.value = 4;
-
-            keys.numberChange = true;
+            keys.digitChange = true;
             break;
     }
     
@@ -272,6 +271,7 @@ window.addEventListener('keyup', (event) => {
             break;
         case 'Space':
             keys.space.pressed = false;
+            keys.space.used = false;
             break;
     }
 });

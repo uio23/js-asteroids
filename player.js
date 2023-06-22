@@ -27,10 +27,8 @@ class Player {
 
         // If the rotation is/more than one revolaton, reset it to 0
         if (Math.abs(this.rotation) >= Math.PI * 2) this.rotation = 0;
-      
         // Update rotation based on rotation speed change
         this.rotation += this.rotation_speed;
-
 
 
         // Calculate distances from center of spaceship relative to canvas x & y
@@ -51,11 +49,8 @@ class Player {
 
 
     accelerate() {
-        console.log(this.velocity)
-        console.log(this.rotation)
       this.velocity.x += Math.cos(this.rotation) * this.acceleration;
       this.velocity.y +=  Math.sin(this.rotation)  * this.acceleration;
-      console.log(this.velocity)
     }
 
     decelerate() {
@@ -78,7 +73,7 @@ class Player {
       } 
       // Else use typical rotation friction
       else {
-        this.rotation_speed *= gameConfiguration.rotational_frictio;
+        this.rotation_speed *= gameConfiguration.rotational_friction;
       }
       
       

@@ -30,7 +30,7 @@ class MiniMap {
 
         var playerX, playerY;
 
-        if (this.actualSize == this.miniMapScales[3]) {
+        if (this.actualSize == this.miniMapScales[1]) {
             playerX = player.absolutePosition.x * this.scale + this.position.x;
             playerY = player.absolutePosition.y * this.scale + this.position.y;
         } else {
@@ -52,7 +52,7 @@ class MiniMap {
         var itemRadius = item.radius * this.scale;
 
 
-        if (this.actualSize == this.miniMapScales[3]) {
+        if (this.actualSize == this.miniMapScales[1]) {
             itemX = item.absolutePosition.x * this.scale + this.position.x;
             itemY = item.absolutePosition.y * this.scale + this.position.y;
         } else {

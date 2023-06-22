@@ -2,9 +2,11 @@ class AmmoBar {
     constructor ({position, size}) {
         this.positionX = position.x;
         this.originalY = position.y;
+        this.currentY = this.originalY;
 
         this.width = size.width;
         this.fullHeight = size.height;
+        this.currentHeight = this.fullHeight;
 
         this.color = 'green';
     }
@@ -22,13 +24,13 @@ class AmmoBar {
 
         ctx.fillStyle = this.color;
 
-        let spent = player.ammo * this.fullHeight / player.fullAmmo;
-        let y = this.originalY + spent;
+        this.currentHeight = player.ammo * this.fullHeight / player.fullAmmo;
 
         if (player.ammo > 0) { 
-            ctx.fillRect(this.positionX, y, this.width, this.fullHeight - spent);
+            this.currentY = this.originalY + (this.fullHeight - this.currentHeight);
+            ctx.fillRect(this.positionX, this.currentY, this.width, this.currentHeight);
         } else {
-            ctx.fillRect(this.positionX, this.fullHeight, this.width, 1);
+            ctx.fillRect(this.positionX, this.currentY, this.width, 1);
         }
 
         // Show how much ammo is left
