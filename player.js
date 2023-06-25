@@ -1,7 +1,7 @@
 const gameConfiguration = require('./gameConfiguration');
 
 class Player {
-    constructor({position, velocity, id}) {
+    constructor({position, velocity, id, username}) {
         this.position = position; // {x, y}
         this.absolutePosition = {x: gameConfiguration.width / 2, y: gameConfiguration.height / 2};
         this.velocity = velocity; // {x, y}
@@ -12,11 +12,13 @@ class Player {
         this.id = id;
         this.color = '#' + Math.floor(Math.random()*16777215).toString(16);
         this.rcs = false;
-        this.acceleration =  0.1;
+        this.acceleration =  0.2;
         this.rotation_acceleration = 0.002;
         this.projectiles = [];
         this.fullAmmo = 20;
         this.ammo = this.fullAmmo;
+        this.username = username;
+        this.coins = 0;
     }
 
 

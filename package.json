@@ -9,6 +9,7 @@
   "author": "Alexander Kashpir",
   "license": "ISC",
   "dependencies": {
+    "friendly-username-generator": "^2.0.4",
     "socket.io": "^4.6.2",
     "socketio": "^1.0.0"
   }

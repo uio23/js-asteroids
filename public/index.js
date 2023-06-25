@@ -26,13 +26,13 @@ var ammoBar;
 
 
 
-socket.on('playerJoined', message => {
-    messages.push(new Message(message));
+socket.on('playerJoined', messageData => {
+    messages.push(new Message(messageData.message, messageData.messageColor));
 });
 
 socket.on('playerLeft', data => {
     players = data.playersList;
-    messages.push(new Message(data.message));
+    messages.push(new Message(data.message, data.messageColor));
 });
 
 socket.on('sprites', sprites => {
@@ -116,6 +116,21 @@ const keys = {
 }
 
 
+function isOverHUD(distanceToViewX, distanceToViewY, sprite) {
+    if ((distanceToViewX + sprite.radius >= miniMap.position.x && 
+        distanceToViewY - sprite.radius <= miniMap.position.y + miniMap.size.y &&
+        distanceToViewX - sprite.radius <= miniMap.position.x + miniMap.size.x && 
+        distanceToViewY + sprite.radius >= miniMap.position.y) || 
+        (distanceToViewX + sprite.radius >= ammoBar.positionX && 
+        distanceToViewY - sprite.radius <= ammoBar.originalY + ammoBar.fullHeight &&
+        distanceToViewX - sprite.radius <= ammoBar.positionX + ammoBar.width && 
+        distanceToViewY + sprite.radius >= ammoBar.originalY)) {
+            return true;
+        }
+    return false;
+}
+
+
 // Define game loop...
 function animate() {
     // Re-run function constantley
@@ -133,9 +148,9 @@ function animate() {
     
 
 
-
     miniMap.draw(ctx, thisPlayer);
     ammoBar.draw(ctx, thisPlayer);
+    
 
     
     
@@ -151,13 +166,25 @@ function animate() {
     for (let i = players.length - 1; i >= 0; i--) { 
         const player = players[i];
         if (player.id != thisPlayer.id) {
-            Artist.drawPlayer(ctx, player, thisPlayer);
+            let distancesToPlayerX = player.absolutePosition.x - thisPlayer.absolutePosition.x;
+            let distanceToViewX = distancesToPlayerX + (canvas.width / 2);
+
+            let distancesToPlayerY = player.absolutePosition.y - thisPlayer.absolutePosition.y;
+            let distanceToViewY =  distancesToPlayerY + (canvas.height / 2);
+            if (isOverHUD(distanceToViewX, distanceToViewY, player)) {
+                Artist.drawPlayer(ctx, player, {x: distanceToViewX, y: distanceToViewY}, true);
+            } else {
+                Artist.drawPlayer(ctx, player, {x: distanceToViewX, y: distanceToViewY});
+            }
+            miniMap.drawItem(player, {x: distancesToPlayerX, y:distancesToPlayerY}, true);
+            
         } else {
             Artist.drawThisPlayer(ctx, canvas, player);
         }
     }
     
 
+   
     for (let i = ammoBoosts.length - 1; i >= 0; i--) {
         const boost = ammoBoosts[i];
 
@@ -169,17 +196,20 @@ function animate() {
         let distanceToViewY =  distancesToPlayerY + (canvas.height / 2);
 
         // Only draw the boost if it would be visible to the player
-        if (Math.abs(distanceToViewX) + boost.radius <= canvas.width &&
-            Math.abs(distanceToViewY) + boost.radius <= canvas.height) {
-                Artist.drawBoost(ctx, boost, {x: distanceToViewX, y: distanceToViewY});
+        if (distanceToViewX  > -boost.radius &&  distanceToViewX <= canvas.width + boost.radius &&
+            distanceToViewY > -boost.radius && distanceToViewY <= canvas.height + boost.radius) {
+                if (isOverHUD(distanceToViewX, distanceToViewY, boost)) {
+                    Artist.drawBoost(ctx, boost, {x: distanceToViewX, y: distanceToViewY}, true);
+                } else {
+                    Artist.drawBoost(ctx, boost, {x: distanceToViewX, y: distanceToViewY});
+                } 
         }
         miniMap.drawItem(boost, {x: distancesToPlayerX, y:distancesToPlayerY});
-
     }
     
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
-        const projectile = ammoBoosts[i];
+        const projectile = projectiles[i];
 
 
         let distancesToPlayerX = projectile.absolutePosition.x - thisPlayer.absolutePosition.x;
@@ -191,7 +221,12 @@ function animate() {
         // Only draw the boost if it would be visible to the player
         if (Math.abs(distanceToViewX) + projectile.radius <= canvas.width &&
             Math.abs(distanceToViewY) + projectile.radius <= canvas.height) {
-                Artist.drawProjectile(ctx, projectile, {x: distanceToViewX, y: distanceToViewY})
+                if (isOverHUD(distanceToViewX, distanceToViewY, projectile)) {
+                    Artist.drawProjectile(ctx, projectile, {x: distanceToViewX, y: distanceToViewY}, true)
+                } else {
+                    Artist.drawProjectile(ctx, projectile, {x: distanceToViewX, y: distanceToViewY})
+                }
+                
             
         }        
     }
@@ -208,6 +243,7 @@ function animate() {
             messages.splice(i, 1);
         }
     }  
+    
     
 
 }

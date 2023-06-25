@@ -12,11 +12,11 @@ class AmmoBar {
     }
 
     draw (ctx, player) {
-        if (player.ammo >= 0.6) {
+        if (player.ammo >= 15) {
             this.color = 'green';
-        } else if (player.ammo >= 0.4) {
+        } else if (player.ammo >= 10) {
             this.color = '#FDDA0D';
-        } else if (player.ammo >= 0.2) {
+        } else if (player.ammo >= 5) {
             this.color = 'orange';
         } else {
             this.color = 'red';
@@ -30,8 +30,11 @@ class AmmoBar {
             this.currentY = this.originalY + (this.fullHeight - this.currentHeight);
             ctx.fillRect(this.positionX, this.currentY, this.width, this.currentHeight);
         } else {
-            ctx.fillRect(this.positionX, this.currentY, this.width, 1);
+            ctx.fillRect(this.positionX, this.originalY +  this.fullHeight -1, this.width, 1);
         }
+        ctx.strokeStyle = '#176B87';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.positionX -1, this.originalY-1, this.width + 2, this.fullHeight + 2);
 
         // Show how much ammo is left
         ctx.font = "48px sans-serif";

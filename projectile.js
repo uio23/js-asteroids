@@ -1,14 +1,11 @@
 class Projectile {
-    constructor({position, velocity, absolutePosition, id}) {
-        this.position = position;
+    constructor({velocity, absolutePosition, id}) {
         this.absolutePosition = absolutePosition;
         this.velocity = velocity;
-        this.radius = 5;
         this.playerId = id;
+        this.radius = 5;
     }
     update () {
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
         this.absolutePosition.x += this.velocity.x;
         this.absolutePosition.y += this.velocity.y;
     }

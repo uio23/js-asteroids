@@ -21,8 +21,8 @@ class MiniMap {
 
     draw (ctx, player) {
         
-        ctx.fillStyle = 'black';
-        ctx.strokeStyle = 'white';
+        ctx.fillStyle = '#000e18';
+        ctx.strokeStyle = '#176B87';
         ctx.lineWidth = 2;
         ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
         ctx.strokeRect(this.position.x, this.position.y, this.size.x, this.size.y);
@@ -47,7 +47,7 @@ class MiniMap {
         ctx.fill();
     }
 
-    drawItem(item, position) {
+    drawItem(item, position, player=false) {
         var itemX, itemY;
         var itemRadius = item.radius * this.scale;
 
@@ -66,9 +66,18 @@ class MiniMap {
 
 
         ctx.beginPath();
-        ctx.arc(itemX, itemY, itemRadius, 0, Math.PI * 2, false);
+        if (!player) {
+            ctx.fillStyle = item.color;
+            ctx.arc(itemX, itemY, itemRadius, 0, Math.PI * 2, false);
+        } else {
+            itemRadius =  item.radius * 6.25 * this.scale;
+            ctx.fillStyle = 'red';
+            ctx.fillRect(itemX + itemRadius, itemY + itemRadius, itemRadius * 2, itemRadius * 2);
+            
+        }
+        
         ctx.closePath();
-        ctx.fillStyle = item.color;
+        
         ctx.fill();
     }
 }

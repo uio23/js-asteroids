@@ -1,21 +1,16 @@
 class Artist {
-    static drawPlayer(ctx, player, thisPlayer) {
-        let distancesToPlayerX = player.absolutePosition.x - thisPlayer.absolutePosition.x;
-        let distanceToViewX = distancesToPlayerX + (canvas.width / 2);
-        let distancesToPlayerY = player.absolutePosition.y - thisPlayer.absolutePosition.y;
-        let distanceToViewY =  distancesToPlayerY + (canvas.height / 2);
-    
+    static drawPlayer(ctx, player, position, op) {
         ctx.save();
-        ctx.translate(distanceToViewX, distanceToViewY);
+        ctx.translate(position.x, position.y);
         ctx.rotate(player.rotation);
     
-        ctx.translate(-distanceToViewX, -distanceToViewY);
+        ctx.translate(-position.x, -position.y);
     
         
     
         // Create player's centre-circle path/shape & draw it
         ctx.beginPath();
-        ctx.arc(distanceToViewX, distanceToViewY, 4, 0, Math.PI * 2, false);
+        ctx.arc(position.x, position.y, 4, 0, Math.PI * 2, false);
         ctx.closePath();
     
         // Thick blue stroke
@@ -26,16 +21,25 @@ class Artist {
     
         // Create player's path (triangle) & draw it
         ctx.beginPath();
-        ctx.moveTo(distanceToViewX + 30, distanceToViewY);
-        ctx.lineTo(distanceToViewX - 10, distanceToViewY - 10);
-        ctx.lineTo(distanceToViewX - 10, distanceToViewY + 10);
+        ctx.moveTo(position.x + 30, position.y);
+        ctx.lineTo(position.x - 10, position.y - 10);
+        ctx.lineTo(position.x - 10, position.y + 10);
         ctx.closePath();
     
         // Thin white stroke
-        ctx.strokeStyle = 'white';
+        if (op) {
+            ctx.strokeStyle = `rgba(255, 255, 255, 0.2)`;
+        } else {
+            ctx.strokeStyle = 'white';
+        }
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.restore();
+
+        ctx.font = "24px sans-serif";
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.fillText(player.username, position.x, position.y - 30);
     }
 
     static drawThisPlayer(ctx, canvas, player) {
@@ -88,21 +92,33 @@ class Artist {
         } else {
           ctx.fillText("R.C.S OFF", canvas.width/2, canvas.height - 50);
         }
+        ctx.textAlign = "right";
+        ctx.fillText(player.username, canvas.width - 20, canvas.height - 20);
+        ctx.textAlign = "left";
+        ctx.fillText(`Coins: ${player.coins}`, 25, 250);
     }
 
-    static drawBoost (ctx, boost, position) {
+    static drawBoost (ctx, boost, position, op=false) {
         ctx.beginPath();
+        if (op) {
+            ctx.fillStyle = `rgba(0, 255, 0, 0.2)`;
+        } else {
+            ctx.fillStyle = 'green';
+        }
         ctx.arc(position.x, position.y, boost.radius, 0, Math.PI * 2, false);
         ctx.closePath();
-        ctx.fillStyle = boost.color;
         ctx.fill();
     }
 
-    static drawProjectile (ctx, projectile, position) {
+    static drawProjectile (ctx, projectile, position, op=false) {
         ctx.beginPath();
+        if (op) {
+            ctx.fillStyle = `rgba(255, 255, 255, 0.2)`;
+        } else {
+            ctx.fillStyle = 'white';
+        }
         ctx.arc(position.x, position.y, projectile.radius, 0, Math.PI * 2, false);
         ctx.closePath();
-        ctx.fillStyle = 'white';
         ctx.fill();
     }
 }

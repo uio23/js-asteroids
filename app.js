@@ -9,11 +9,14 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
+const { generateUsername } = require('friendly-username-generator');
+
 const Player = require('./player');
 const AmmoBoost = require('./ammoBoost');
 const Projectile = require('./projectile');
 
 const gameConfiguration = require('./gameConfiguration');
+const { platform } = require("os");
 
 
 
@@ -22,6 +25,8 @@ const gameConfiguration = require('./gameConfiguration');
 const players = []
 const ammoBoosts = []
 const projectiles = []
+
+var playerToReward = null;
 
 
 const miniMapScales = [
@@ -51,10 +56,12 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
+    let randUsername = generateUsername({useRandomNumber: false});
   players.push(new Player({
     position: {x: 200 , y: 200}, 
     velocity: {x: 0, y: 0},
-    id: socket.id
+    id: socket.id,
+    username: randUsername
   }));
 
   console.log('\nnew player!');
@@ -62,7 +69,7 @@ io.on('connection', (socket) => {
   console.log('\n\n');
 
   socket.emit('config', {gameConfiguration: gameConfiguration, miniMapScales: miniMapScales, players: players});
-  socket.broadcast.emit('playerJoined', socket.id + " joined!");
+  socket.broadcast.emit('playerJoined', {message: randUsername + " joined!", messageColor: 'green'});
   
 
     socket.on('canvasCenter', canvasCenter => {
@@ -76,6 +83,10 @@ io.on('connection', (socket) => {
 
     socket.on('frame', keys => {
         players.forEach((player, index) => {
+            if (player.id == playerToReward) {
+                player.coins += 20;
+                playerToReward = null;
+            }
             if (player.id == socket.id) {
 
                 player.update();
@@ -139,7 +150,8 @@ io.on('connection', (socket) => {
                         }
                     } else if (Math.abs(player.absolutePosition.x - projectile.absolutePosition.x) <= player.radius + projectile.radius && 
                         Math.abs(player.absolutePosition.y - projectile.absolutePosition.y) <= player.radius + projectile.radius) {
-                        console.log('HIT!');
+                        player.coins -= 30;
+                        playerToReward = projectile.playerId;
                         projectiles.splice(i, 1);
                     }
                 }
@@ -147,10 +159,6 @@ io.on('connection', (socket) => {
                 if (keys.space.pressed && !keys.space.used) {
                     if (player.ammo > 0) {
                         projectiles.push(new Projectile({
-                            position: {
-                                x: player.position.x + Math.cos(player.rotation) * 30,
-                                y: player.position.y + Math.sin(player.rotation) * 30
-                            },
                             velocity: {
                                 x: Math.cos(player.rotation) * gameConfiguration.projectile_speed + player.velocity.x,
                                 y: Math.sin(player.rotation) * gameConfiguration.projectile_speed + player.velocity.y
@@ -178,11 +186,11 @@ io.on('connection', (socket) => {
     console.log('player left...')
     for (let i = players.length - 1; i >= 0; i--) {
       if (players[i].id == socket.id) {
+        let data = {playersList: players, message: `${players[i].username} left...`, messageColor: 'red'}
         players.splice(i, 1);
+        socket.broadcast.emit('playerLeft', data);
       }
     }
-    let data = {playersList: players, message: `${socket.id} left...`}
-    socket.broadcast.emit('playerLeft', data);
   });
 });
 
