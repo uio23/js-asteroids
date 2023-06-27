@@ -2,13 +2,7 @@ const path = require("path");
 const http = require('http');
 
 const express = require('express');
-const app = express();
-app.use(express.static(path.join(__dirname, 'public')))
-
-const server = http.createServer(app);
 const { Server } = require("socket.io");
-const io = new Server(server);
-
 const { generateUsername } = require('friendly-username-generator');
 
 const Player = require('./player');
@@ -16,19 +10,22 @@ const AmmoBoost = require('./ammoBoost');
 const Projectile = require('./projectile');
 
 const gameConfiguration = require('./gameConfiguration');
-const { platform } = require("os");
 
 
+const app = express();
+const server = http.createServer(app);
 
+const io = new Server(server);
+
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 const players = []
 const ammoBoosts = []
 const projectiles = []
 
-var playerToReward = null;
-
-
+// Export as gameConfiguration property in future
 const miniMapScales = [
     {
         x: gameConfiguration.width / 2,
@@ -40,8 +37,10 @@ const miniMapScales = [
     }
 ]
 
+var playerToReward = null;
 
 
+// Spawn in 20 ammo boosts
 for (let i = 1; i < 20; i++) {
   ammoBoosts.push(new AmmoBoost({
       x: Math.random() * gameConfiguration.width,
@@ -50,35 +49,35 @@ for (let i = 1; i < 20; i++) {
 }
 
 
-
-app.get('/', (req, res) => {
+// Serve up game page at any domain path
+app.use('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
+
+// Handle connection to the server
 io.on('connection', (socket) => {
-    let randUsername = generateUsername({useRandomNumber: false});
+  // Create a new player for the user 
   players.push(new Player({
     position: {x: 200 , y: 200}, 
     velocity: {x: 0, y: 0},
     id: socket.id,
-    username: randUsername
+    username: generateUsername({useRandomNumber: false});
   }));
 
-  console.log('\nnew player!');
-  console.log(players);
-  console.log('\n\n');
+  console.log(`\n\nnew player ${players[-1]}\n\n`);
 
+  // Send all users universal configuration data & player list
   socket.emit('config', {gameConfiguration: gameConfiguration, miniMapScales: miniMapScales, players: players});
+  // Inform other game-instances of a new player
   socket.broadcast.emit('playerJoined', {message: randUsername + " joined!", messageColor: 'green'});
   
-
-    socket.on('canvasCenter', canvasCenter => {
-
-        players.forEach((player, index) => {
-            if (player.id == socket.id) {
-                player.position = canvasCenter;
-            }
-        });
+  socket.on('canvasCenter', canvasCenter => {
+    players.forEach((player, index) => {
+        if (player.id == socket.id) {
+            player.position = canvasCenter;
+        }
+    });
     });
 
     socket.on('frame', keys => {
@@ -195,7 +194,6 @@ io.on('connection', (socket) => {
 });
 
 
-
-server.listen(3000, () => {
-  console.log('listening on localhost, port 3000');
+server.listen(8080, () => {
+  console.log('listening on port 8080');
 });
