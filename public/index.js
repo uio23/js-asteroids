@@ -10,8 +10,7 @@ canvas.height = window.innerHeight;
 ctx.fillStyle = 'black';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-
-var socket = io.connect('localhost:3000');
+var socket = io.connect(window.location.host);
 
 
 var players = [];
@@ -19,7 +18,6 @@ var ammoBoosts = [];
 var projectiles = [];
 var thisPlayer = {};
 var thisPlayerId;
-var miniMapScales = [];
 const messages = [];
 var miniMap;
 var ammoBar;
@@ -53,23 +51,17 @@ socket.on('connect', () => {
 });
 
 socket.on('config', config => {
-    gameConfiguration = config.gameConfiguration;
-    miniMapScales = config.miniMapScales;
+    let gameConfiguration = config.gameConfiguration;
     players = config.players;
-
     players.forEach(player => {
         if (player.id == thisPlayerId) {
             thisPlayer = player;
         }
     });
-
-    
-
-
     miniMap = new MiniMap({
         offset: {x: 50, y: 50},
         width: canvas.width / 5,
-        miniMapScales: miniMapScales
+        miniMapScales: gameConfiguration.miniMapScales
     })
     
     // Create an ammoBar with an ammo-weight of 2%

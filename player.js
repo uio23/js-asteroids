@@ -22,7 +22,7 @@ class Player {
     }
 
 
-    update() {
+    update(keys) {
         // Update absolute position by velocity
         this.absolutePosition.x += this.velocity.x; 
         this.absolutePosition.y += this.velocity.y;
@@ -32,21 +32,29 @@ class Player {
         // Update rotation based on rotation speed change
         this.rotation += this.rotation_speed;
 
+        
+        // Update player based on key states
+        if (keys.r.toggled) {
+          this.rcs = true;
+        } else {
+          this.rcs = false;
+        }
 
-        // Calculate distances from center of spaceship relative to canvas x & y
-        //var pointADistance = Math.cos(this.rotation) * 30;
-        //var pointBDistance = Math.cos(Math.PI - this.rotation + 2.35619) * Math.sqrt(Math.pow(10, 2)*2);
-        //var pointCDistance = Math.cos(Math.PI + this.rotation + 2.35619) * Math.sqrt(Math.pow(10, 2)*2);
-      
-        // Messes up absolute position for now...
-        //if (!(OFFSET >= this.absolutePosition.x + this.velocity.x || this.absolutePosition.x + this.velocity.x >= WIDTH - OFFSET)) {
-        //if ((this.absolutePosition.x + canvas.width / 2 >= WIDTH) || this.absolutePosition.x - canvas.width / 2 <= 0) {
-        //this.position.x += this.velocity.x;
-        //}
-        //this.absolutePosition.x += this.velocity.x; 
-        //}else {
-        //this.velocity.x = 0;
-        //}   
+        if (keys.w.pressed) {
+          this.accelerate();
+        }
+        else {
+          this.decelerate();
+        }
+
+        if (keys.d.pressed) {
+          this.turn('right');
+        } else if (keys.a.pressed) {
+          this.turn('left');
+        } 
+        else {
+          this.decelerateTurn();
+        }
     }
 
 
@@ -61,9 +69,9 @@ class Player {
     }
 
     turn(direction) {
-      if (direction) {
+      if (direction == 'right') {
         this.rotation_speed += this.rotation_acceleration;
-      } else {
+      } else if (direction == 'left') {
         this.rotation_speed -= this.rotation_acceleration
       }
     }
