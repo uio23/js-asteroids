@@ -1,4 +1,5 @@
 class Projectile {
+    static radius = 5;
     constructor({velocity, absolutePosition, id}) {
         this.absolutePosition = absolutePosition;
         this.velocity = velocity;

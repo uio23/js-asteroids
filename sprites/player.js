@@ -1,20 +1,23 @@
-const gameConfiguration = require('./gameConfiguration');
+const Projectile = require('./projectile');
+
 
 class Player {
-    constructor({position, velocity, id, username}) {
+    static radius = 4;
+    constructor({position, absolutePosition, velocity, id, username, gameConfiguration}) {
         this.position = position; // {x, y}
-        this.absolutePosition = {x: gameConfiguration.width / 2, y: gameConfiguration.height / 2};
+        this.absolutePosition = absolutePosition;
         this.velocity = velocity; // {x, y}
         this.rotation = 0; // Radians
         this.radius = 4;
         this.rotation_speed = 0; // Radians
+
+        this.gameConfiguration = gameConfiguration;
 
         this.id = id;
         this.color = '#' + Math.floor(Math.random()*16777215).toString(16);
         this.rcs = false;
         this.acceleration =  0.2;
         this.rotation_acceleration = 0.002;
-        this.projectiles = [];
         this.fullAmmo = 20;
         this.ammo = this.fullAmmo;
         this.username = username;
@@ -64,8 +67,8 @@ class Player {
     }
 
     decelerate() {
-      this.velocity.x *= gameConfiguration.friction;
-      this.velocity.y *= gameConfiguration.friction;
+      this.velocity.x *= this.gameConfiguration.friction;
+      this.velocity.y *= this.gameConfiguration.friction;
     }
 
     turn(direction) {
@@ -79,16 +82,39 @@ class Player {
     decelerateTurn() {
       // If R.C.S is toggled stop rotation a lot more efficientley
       if (this.rcs) {
-        this.rotation_speed *= gameConfiguration.rcs_friction;
+        this.rotation_speed *= this.gameConfiguration.rcs_friction;
       } 
       // Else use typical rotation friction
       else {
-        this.rotation_speed *= gameConfiguration.rotational_friction;
+        this.rotation_speed *= this.gameConfiguration.rotational_friction;
       }
-      
-      
-      
-      
+    }
+
+    reload() {
+      this.ammo = this.fullAmmo;
+    }
+
+    shoot() {
+      if (this.ammo > 0) {
+        // Create projectile at tip of spaceship, moving in its direction
+        let projectile = new Projectile({
+          velocity: {
+            x: Math.cos(this.rotation) * this.gameConfiguration.projectile_speed + this.velocity.x,
+            y: Math.sin(this.rotation) * this.gameConfiguration.projectile_speed + this.velocity.y
+          },
+          absolutePosition: {
+            x: this.absolutePosition.x + Math.cos(this.rotation) * 30,
+            y: this.absolutePosition.y + Math.sin(this.rotation) * 30
+          },
+          id: this.id
+        })
+
+
+        this.ammo -= 1;
+
+
+        return projectile;
+      }  
     }
 }
 

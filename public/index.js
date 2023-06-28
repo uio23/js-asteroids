@@ -47,7 +47,7 @@ socket.on('sprites', sprites => {
 
 socket.on('connect', () => {
     thisPlayerId = socket.id;
-    socket.emit('canvasCenter', {x: canvas.width / 2, y: canvas.height / 2});
+    socket.emit('clientSpecs', {windowSize: {x: canvas.width, y: canvas.height}});
 });
 
 socket.on('config', config => {
