@@ -10,7 +10,7 @@ class Artist {
     
         // Create player's centre-circle path/shape & draw it
         ctx.beginPath();
-        ctx.arc(position.x, position.y, 4, 0, Math.PI * 2, false);
+        ctx.arc(position.x, position.y, player.radius, 0, Math.PI * 2, false);
         ctx.closePath();
     
         // Thick blue stroke

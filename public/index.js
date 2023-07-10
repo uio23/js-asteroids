@@ -66,13 +66,13 @@ socket.on('config', config => {
     
     // Create an ammoBar with an ammo-weight of 2%
     ammoBar = new AmmoBar({
-        position: {
+        offset: {
             x: 20,
             y: 20
         },
         size: {
-            width: 100,
-            height: 200
+            x: 100,
+            y: 200
         }
     });
     
@@ -210,7 +210,7 @@ function animate() {
         let distancesToPlayerY = projectile.absolutePosition.y - thisPlayer.absolutePosition.y;
         let distanceToViewY =  distancesToPlayerY + (canvas.height / 2);
 
-        // Only draw the boost if it would be visible to the player
+        // Only draw the projectile if it would be visible to the player
         if (Math.abs(distanceToViewX) + projectile.radius <= canvas.width &&
             Math.abs(distanceToViewY) + projectile.radius <= canvas.height) {
                 if (isOverHUD(distanceToViewX, distanceToViewY, projectile)) {

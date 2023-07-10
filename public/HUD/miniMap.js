@@ -1,16 +1,23 @@
 class MiniMap {
     constructor({offset, width, miniMapScales}) {
-        this.actualSize = miniMapScales[0];
+        this.miniMapScales = miniMapScales;
+        
+        this.actualSize = this.miniMapScales[0];
         this.scale = width / this.actualSize.x
+
         this.size = {
             x: width,
             y: this.actualSize.y * this.scale
         }
+
         this.position = {
             x: canvas.width - (this.size.x + offset.x),
             y: offset.y
         }
-        this.miniMapScales = miniMapScales;
+
+        this.bg_color = '#000e18';
+        this.border_color = '#176B87';
+        this.border_width = 2;
     }
 
     updateActualSize(newActualSize) {
@@ -20,12 +27,21 @@ class MiniMap {
     }
 
     draw (ctx, player) {
-        
-        ctx.fillStyle = '#000e18';
-        ctx.strokeStyle = '#176B87';
-        ctx.lineWidth = 2;
-        ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
+        ctx.fillStyle = this.bg_color;
+        ctx.strokeStyle = this.border_color;
+        ctx.lineWidth = this.border_width;
+
+        // Draw border for the display
         ctx.strokeRect(this.position.x, this.position.y, this.size.x, this.size.y);
+
+        // Draw the dark-blue mini-map inside border
+        ctx.fillRect(
+            this.position.x + this.border_width / 2, 
+            this.position.y + this.border_width / 2, 
+            this.size.x - this.border_width, 
+            this.size.y - this.border_width
+        );
+        
 
 
         var playerX, playerY;
@@ -33,13 +49,14 @@ class MiniMap {
         if (this.actualSize == this.miniMapScales[1]) {
             playerX = player.absolutePosition.x * this.scale + this.position.x;
             playerY = player.absolutePosition.y * this.scale + this.position.y;
+            
         } else {
             playerX = this.position.x + this.size.x / 2;
             playerY = this.position.y + this.size.y / 2;
         }
 
-        let playerRadius = player.radius * 12.5 * this.scale;
-
+        let playerRadius = player.radius * this.scale;
+         
         ctx.beginPath();
         ctx.arc(playerX, playerY, playerRadius, 0, Math.PI * 2, false);
         ctx.closePath();
@@ -70,10 +87,11 @@ class MiniMap {
             ctx.fillStyle = item.color;
             ctx.arc(itemX, itemY, itemRadius, 0, Math.PI * 2, false);
         } else {
-            itemRadius =  item.radius * 6.25 * this.scale;
+            if (this.actualSize == this.miniMapScales[1]) {
+                itemRadius = item.radius * 2 * this.scale;
+            } 
             ctx.fillStyle = 'red';
             ctx.fillRect(itemX + itemRadius, itemY + itemRadius, itemRadius * 2, itemRadius * 2);
-            
         }
         
         ctx.closePath();
