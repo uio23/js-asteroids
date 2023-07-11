@@ -21,13 +21,14 @@ const gameMaster = new GameMaster(gameConfiguration);
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+app.get('/test', (req, res) => {
+  console.log('hey');
+});
+
+
 // Serve up game page at any domain path
 app.use('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
-});
-
-app.get('/', (req, res) => {
-  res.send('Hello!');
 });
 
 

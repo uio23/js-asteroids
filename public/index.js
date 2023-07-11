@@ -1,10 +1,10 @@
 // Prevent hosting cpu from disconnecting client, with a post to the server every 20s
 var xhr = new XMLHttpRequest();
 window.setInterval(() => {
-    console.log(location.origin)
-    xhr.open('GET', location.origin, true);
+    console.log('ok');
+    xhr.open('GET', location.origin + '/test', true);
     xhr.send('hey');
-}, 3000);
+}, 10000);
 
 
 // Initialize game canvas
