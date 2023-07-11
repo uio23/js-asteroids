@@ -16,9 +16,9 @@ class Player {
         this.id = id;
         this.color = color;
         this.rcs = false;
-        this.acceleration = 0.13;
-        this.rotation_acceleration = 0.001;
-        this.rcs_acceleration = 0.004;
+        this.acceleration = 0.1;
+        this.rotation_acceleration = 0.002;
+        this.rcs_speed = 0.05;
         this.fullAmmo = 20;
         this.ammo = this.fullAmmo;
         this.username = username;
@@ -72,18 +72,16 @@ class Player {
     }
 
     turn(direction) {
-      console.log(this.rotation);
-      console.log(this.rotation_speed)
       if (direction == 'right') {
-        if (this.rcs && this.rotation_speed < 0.18) {
-          this.rotation_speed += this.rcs_acceleration;
-        } else if (!this.rcs) {
+        if (this.rcs) {
+          this.rotation_speed = this.rcs_speed;
+        } else {
           this.rotation_speed += this.rotation_acceleration;
         }
       } else if (direction == 'left') {
-        if (this.rcs && this.rotation_speed > -0.18) {
-          this.rotation_speed -= this.rcs_acceleration;
-        } else if (!this.rcs) {
+        if (this.rcs) {
+          this.rotation_speed = -this.rcs_speed;
+        } else {
           this.rotation_speed -= this.rotation_acceleration
         }
         
