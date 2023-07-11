@@ -16,8 +16,8 @@ class Player {
         this.id = id;
         this.color = color;
         this.rcs = false;
-        this.acceleration = 0.2;
-        this.rotation_acceleration = 0.002;
+        this.acceleration = 0.14;
+        this.rotation_acceleration = 0.004;
         this.fullAmmo = 20;
         this.ammo = this.fullAmmo;
         this.username = username;
@@ -34,7 +34,6 @@ class Player {
         if (Math.abs(this.rotation) >= Math.PI * 2) this.rotation = 0;
         // Update rotation based on rotation speed change
         this.rotation += this.rotation_speed;
-
         
         // Update player based on key states
         if (keys.r.toggled) {
@@ -72,9 +71,9 @@ class Player {
     }
 
     turn(direction) {
-      if (direction == 'right') {
+      if (direction == 'right' && this.rotation_speed < 0.18) {
         this.rotation_speed += this.rotation_acceleration;
-      } else if (direction == 'left') {
+      } else if (direction == 'left' && this.rotation_speed > -0.18) {
         this.rotation_speed -= this.rotation_acceleration
       }
     }
@@ -95,8 +94,7 @@ class Player {
     }
 
     shoot() {
-      if (this.ammo > 0) {
-        // Create projectile at tip of spaceship, moving in its direction
+      // Create projectile at tip of spaceship, moving in its direction
         let projectile = new Projectile({
           velocity: {
             x: Math.cos(this.rotation) * this.gameConfiguration.projectile_speed + this.velocity.x,
@@ -113,8 +111,7 @@ class Player {
         this.ammo -= 1;
 
 
-        return projectile;
-      }  
+        return projectile; 
     }
 }
 

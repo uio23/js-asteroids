@@ -47,8 +47,8 @@ class GameMaster {
 
         // Send all game-instances game configurations data & updated player list
         socket.emit('config', {gameConfiguration: this.gameConfiguration, players: this.players});
-        // Inform other game-instances of a new player
-        socket.broadcast.emit('message', {content: 'joined!', username: username, color: playerColor});
+        // Inform all game-instances of a new player
+        io.emit('message', {content: 'joined!', username: username, color: playerColor});
 
 
         // When client's specs recieved, center their player in their window
@@ -89,7 +89,9 @@ class GameMaster {
 
                     // Shoot projectile if one hasn't been fired for space-press
                     if (keys.space.pressed && !keys.space.used) {
-                        this.projectiles.push(player.shoot());
+                        if (player.ammo > 0) {
+                            this.projectiles.push(player.shoot());
+                        }
                     }
 
 

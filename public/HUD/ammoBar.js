@@ -42,10 +42,17 @@ class AmmoBar {
                 this.size.y - this.border_width 
             );
         } else {
-            ctx.fillRect(this.position.x, this.originalY +  this.fullHeight -1, this.size.x, 1);
+            // Draw rectangle of height proportional to remaining ammo
+            ctx.fillRect(
+                this.position.x + this.border_width / 2, 
+                this.originalY + (this.fullHeight - 1), 
+                this.size.x - this.border_width, 
+                1 - this.border_width
+            );
         }
         ctx.strokeStyle = this.border_color;
         ctx.lineWidth = this.border_width;
+        // Trace border around entire ammo bar
         ctx.strokeRect(this.position.x, this.originalY, this.size.x, this.fullHeight);
 
         // Show how much ammo is left

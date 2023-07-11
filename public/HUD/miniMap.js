@@ -31,17 +31,12 @@ class MiniMap {
         ctx.strokeStyle = this.border_color;
         ctx.lineWidth = this.border_width;
 
-        // Draw border for the display
-        ctx.strokeRect(this.position.x, this.position.y, this.size.x, this.size.y);
-
-        // Draw the dark-blue mini-map inside border
-        ctx.fillRect(
-            this.position.x + this.border_width / 2, 
-            this.position.y + this.border_width / 2, 
-            this.size.x - this.border_width, 
-            this.size.y - this.border_width
-        );
         
+        // Draw the dark-blue mini-map
+        ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
+
+        // Draw border around
+        ctx.strokeRect(this.position.x - this.border_width / 2, this.position.y - this.border_width / 2, this.size.x + this.border_width, this.size.y + this.border_width);
 
 
         var playerX, playerY;

@@ -103,13 +103,13 @@ socket.on('config', config => {
 
 
 socket.on('message', (message) => {
-    console.log('hey');
     let li = document.createElement('li');
     let span = document.createElement('span');
     let span2 = document.createElement('span');
 
     li.setAttribute('class', 'message');
     span.setAttribute('style', `color: ${message.color};`);
+    span.setAttribute('class', 'username');
 
     if (message.content == "joined!") {
         span2.setAttribute('style', 'color: green;');
@@ -117,7 +117,7 @@ socket.on('message', (message) => {
         span2.setAttribute('style', 'color: red;');
     }
 
-    span.appendChild(document.createTextNode(`${message.username}: `))
+    span.appendChild(document.createTextNode(`[${message.username}] `))
     span2.appendChild(document.createTextNode(message.content));
     li.appendChild(span);
     li.appendChild(span2);
@@ -297,6 +297,13 @@ window.addEventListener('keydown', (event) => {
         return;
     }
     switch (event.code) {
+        case 'Enter':
+            if (input.value) {
+                form.requestSubmit();
+            } else {
+                input.focus();
+            }
+            break;
         case 'KeyW':
             keys.w.pressed = true;
             break;

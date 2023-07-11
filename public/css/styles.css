@@ -11,17 +11,18 @@ body {
     color: white;
     list-style: none;
     font-family: sans-serif;
-    font-size: 18px;
+    font-size: 14px;
     margin: 0;
     padding: 0;
     overflow: auto;
-    height: 200px;
-    max-width: 320px;
+    height: 120px;
+    max-width: 280px;
     -webkit-mask-image: linear-gradient(to top, black 50%, transparent 100%);
     mask-image: linear-gradient(to top, black 50%, transparent 100%);
     display: flex;
     flex-direction: column;
     word-wrap: break-word;
+    margin-left: 4px;
 }
 
 .chat-messages {
@@ -37,10 +38,27 @@ body {
     padding-top: 35px;
 }
 
-.chat-messages span {
+.chat-messages span .username{
     font-weight: bold;
 }
 
 .message {
-    padding-bottom: 3px;
+    padding-bottom: 4px;
+}
+
+.new-message {
+    margin-top: 10px;
+    background-color: #000e18;
+    border-style: solid;
+    border-radius: 5px;
+    border-color: #092b36;
+    color: white;
+    padding: 4px 9px;
+    font-size: 14px;
+    width: 280px;
+}
+
+.new-message:focus, .new-message:active {
+    outline: none;
+    border-color: #176B87;
 }
