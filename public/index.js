@@ -4,7 +4,7 @@ window.setInterval(() => {
     console.log(location.origin)
     xhr.open('GET', location.origin, true);
     xhr.send('hey');
-}, 15000);
+}, 3000);
 
 
 // Initialize game canvas
