@@ -23,6 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/test', (req, res) => {
   console.log('hey');
+  res.json({test_result: 'test_confirm'});
 });
 
 
