@@ -13,6 +13,11 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 var socket = io.connect(window.location.host);
 
 
+var form = document.querySelector('.new-message-form');
+var input = document.querySelector('.new-message');
+var chat_messages = document.querySelector('.chat-messages');
+
+
 var players = [];
 var ammoBoosts = [];
 var projectiles = [];
@@ -47,6 +52,24 @@ socket.on('sprites', sprites => {
 
 socket.on('connect', () => {
     thisPlayerId = socket.id;
+
+
+    // Register a way for broadcasting client's messages
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (input.value) {
+            let message = {
+                content: input.value,
+                username: thisPlayer.username,
+                color: thisPlayer.color
+            }
+
+            socket.emit('new message', message);
+            input.value = '';
+        }
+    });
+
+
     socket.emit('clientSpecs', {windowSize: {x: canvas.width, y: canvas.height}});
 });
 
@@ -79,6 +102,29 @@ socket.on('config', config => {
 });
 
 
+socket.on('message', (message) => {
+    console.log('hey');
+    let li = document.createElement('li');
+    let span = document.createElement('span');
+    let span2 = document.createElement('span');
+
+    li.setAttribute('class', 'message');
+    span.setAttribute('style', `color: ${message.color};`);
+
+    if (message.content == "joined!") {
+        span2.setAttribute('style', 'color: green;');
+    } else if (message.content == 'left...') {
+        span2.setAttribute('style', 'color: red;');
+    }
+
+    span.appendChild(document.createTextNode(`${message.username}: `))
+    span2.appendChild(document.createTextNode(message.content));
+    li.appendChild(span);
+    li.appendChild(span2);
+
+    chat_messages.append(li);
+    chat_messages.scrollTop = chat_messages.scrollHeight;
+});
 
 
 
@@ -247,6 +293,9 @@ function animate() {
 
 // Update key-map when a control key is pressed
 window.addEventListener('keydown', (event) => {
+    if (event.target === input) {
+        return;
+    }
     switch (event.code) {
         case 'KeyW':
             keys.w.pressed = true;
@@ -290,6 +339,9 @@ window.addEventListener('keydown', (event) => {
 
 // Update key-map when a control key is released
 window.addEventListener('keyup', (event) => {
+    if (event.target === input) {
+        return;
+    }
     switch (event.code) {
         case 'KeyW':
             keys.w.pressed = false;

@@ -29,7 +29,7 @@ app.use('/', (req, res) => {
 
 // Handle connection to the server
 io.on('connection', (socket) => {
-  gameMaster.handleConnection(socket);
+  gameMaster.handleConnection(io, socket);
 });
 
 

@@ -25,9 +25,10 @@ class GameMaster {
         }
     }
 
-    handleConnection(socket) {
+    handleConnection(io, socket) {
         // Create a new player for the connected client 
         let username = generateUsername({useRandomNumber: false});
+        let playerColor = '#' + Math.floor(Math.random()*16777215).toString(16);
 
         this.players.push(new Player({
             position: {x: 200 , y: 200}, 
@@ -35,6 +36,7 @@ class GameMaster {
             velocity: {x: 0, y: 0},
             id: socket.id,
             username: username,
+            color: playerColor,
             gameConfiguration: this.gameConfiguration
         }));
 
@@ -46,7 +48,7 @@ class GameMaster {
         // Send all game-instances game configurations data & updated player list
         socket.emit('config', {gameConfiguration: this.gameConfiguration, players: this.players});
         // Inform other game-instances of a new player
-        socket.broadcast.emit('playerJoined', {message: `${username} joined!`, messageColor: 'green'});
+        socket.broadcast.emit('message', {content: 'joined!', username: username, color: playerColor});
 
 
         // When client's specs recieved, center their player in their window
@@ -98,6 +100,11 @@ class GameMaster {
         });
 
 
+        socket.on('new message', (message) => {
+            io.emit('message', message);
+        });
+
+
         // When client disconnects...
         socket.on('disconnect', () => {
             for (let i = this.players.length - 1; i >= 0; i--) {
@@ -105,16 +112,12 @@ class GameMaster {
 
 
                 if (player.id == socket.id) {
-                    // Prepare disconnection data to broadcast
-                    let data = {playersList: this.players, message: `${player.username} left...`, messageColor: 'red'}
-
-
                     // Delete their player
                     this.players.splice(i, 1);
 
-
+                    
                     // Inform all other game-instances of disconnection
-                    socket.broadcast.emit('playerLeft', data);
+                    socket.broadcast.emit('message', {content: 'left...', username: player.username, color: player.color});
 
 
                     console.log(`\n\nplayer left...`);

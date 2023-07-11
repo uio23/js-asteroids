@@ -3,7 +3,7 @@ const Projectile = require('./projectile');
 
 class Player {
     static radius = 16;
-    constructor({position, absolutePosition, velocity, id, username, gameConfiguration}) {
+    constructor({position, absolutePosition, velocity, id, username, color, gameConfiguration}) {
         this.position = position; // {x, y}
         this.absolutePosition = absolutePosition;
         this.velocity = velocity; // {x, y}
@@ -14,7 +14,7 @@ class Player {
         this.gameConfiguration = gameConfiguration;
 
         this.id = id;
-        this.color = '#' + Math.floor(Math.random()*16777215).toString(16);
+        this.color = color;
         this.rcs = false;
         this.acceleration = 0.2;
         this.rotation_acceleration = 0.002;

@@ -8,6 +8,14 @@
 </head>
 <body>
     <canvas></canvas>
+    <div class="chat-container">
+        <ul class="chat-messages">
+        </ul>
+        <form class="new-message-form">
+            <input type="text" class="new-message">
+            <button class="send-message-btn" type="submit">Send</button>
+        </form>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="./artist.js"></script>
     <script  src="./HUD/miniMap.js"></script>
