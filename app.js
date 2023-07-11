@@ -26,6 +26,10 @@ app.use('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
+app.get('/', (req, res) => {
+  res.send('Hello!');
+});
+
 
 // Handle connection to the server
 io.on('connection', (socket) => {
