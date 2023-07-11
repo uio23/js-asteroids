@@ -1,3 +1,12 @@
+// Prevent hosting cpu from disconnecting client, with a post to the server every 20s
+var xhr = new XMLHttpRequest();
+window.setInterval(() => {
+    xhr.open('POST', location.origin, true);
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xhr.send('test=ok');
+}, 20000);
+
+
 // Initialize game canvas
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
@@ -123,11 +132,14 @@ function isOverHUD(distanceToViewX, distanceToViewY, sprite) {
 }
 
 
+
 // Define game loop...
 function animate() {
     // Re-run function constantley
     window.requestAnimationFrame(animate);
 
+
+    
 
     // Clear canvas
     ctx.fillStyle = 'black';
