@@ -126,11 +126,17 @@ class GameMaster {
                         this.players.forEach((otherPlayer, index) => {
                             if (otherPlayer.id == player.target_id) {
                                 let distancesToPlayerX = otherPlayer.absolutePosition.x - player.absolutePosition.x;
-                                let distancesToPlayerY = otherPlayer.absolutePosition.y - player.absolutePosition.y;
+                                let projectileTime = distancesToPlayerX / (Math.cos(player.rotation) * this.gameConfiguration.projectile_speed + player.velocity.x);
+                                let distanceMovedX = otherPlayer.velocity.x * projectileTime + 0.5 * otherPlayer.acceleration * Math.pow(projectileTime, 2);
+                                let distanceMovedY = otherPlayer.velocity.y * projectileTime + 0.5 * otherPlayer.acceleration * Math.pow(projectileTime, 2);
+
+                                distancesToPlayerX = otherPlayer.absolutePosition.x + distanceMovedX - player.absolutePosition.x;
+                                let distancesToPlayerY = otherPlayer.absolutePosition.y + distanceMovedY - player.absolutePosition.y;
                                 let distancesToPlayer = Math.sqrt(Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2));
                                 let angle = Math.acos(distancesToPlayerX / distancesToPlayer);
                                 // mirroring
                                 if (distancesToPlayerY < 0) angle = -angle;
+
                                 player.rotation = angle;
 
                                 target_present = true;
