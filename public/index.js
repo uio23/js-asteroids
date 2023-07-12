@@ -1,3 +1,10 @@
+// Useful info
+window.onload = () => {
+    setTimeout(() => {
+        alert('Welcome to FreeSpace.\nW: Forward\nA: Turn left\nD: Turn right\nSpace: Shoort\nEXTRA:\nR: R.C.S toggle (for combat)\nL: Radar Lock-On\nCHAT:\nEnter: Focus/Send message');
+    }, 300);
+};
+
 // Initialize game canvas
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
@@ -147,6 +154,9 @@ const keys = {
     r: {
         toggled: false
     },
+    l: {
+        toggled: false
+    },
     digit: {
         value: 0
     },
@@ -159,9 +169,9 @@ function isOverHUD(distanceToViewX, distanceToViewY, sprite) {
         distanceToViewY - sprite.radius <= miniMap.position.y + miniMap.size.y &&
         distanceToViewX - sprite.radius <= miniMap.position.x + miniMap.size.x && 
         distanceToViewY + sprite.radius >= miniMap.position.y) || 
-        (distanceToViewX + sprite.radius >= ammoBar.positionX && 
+        (distanceToViewX + sprite.radius >= ammoBar.position.x && 
         distanceToViewY - sprite.radius <= ammoBar.originalY + ammoBar.fullHeight &&
-        distanceToViewX - sprite.radius <= ammoBar.positionX + ammoBar.width && 
+        distanceToViewX - sprite.radius <= ammoBar.position.x + ammoBar.size.x && 
         distanceToViewY + sprite.radius >= ammoBar.originalY)) {
             return true;
         }
@@ -324,11 +334,8 @@ window.addEventListener('keydown', (event) => {
         case 'KeyR':
             keys.r.toggled = !keys.r.toggled;
             break;
-        case 'KeyF':
-            keys.f.toggled = !keys.f.toggled;
-            break;
-        case 'KeyI':
-            keys.i.toggled = !keys.i.toggled;
+        case 'KeyL':
+            keys.l.toggled = !keys.l.toggled;
             break;
         case 'Digit1':
             keys.digit.value = 0;

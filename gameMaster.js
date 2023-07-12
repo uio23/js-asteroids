@@ -94,6 +94,54 @@ class GameMaster {
                         }
                     }
 
+                    //If radar lock-on, try lock onto closes player
+                    if (player.radar_lo) {
+                        if (!player.target_id) {
+                            let x = Math.cos(player.rotation) * 200;
+                            let y = Math.sin(player.rotation) * 200;
+                            let ratio = y/x;
+
+                            this.players.forEach((otherPlayer, index) => {
+                                if (otherPlayer != player) {
+                                    let distancesToPlayerX = otherPlayer.absolutePosition.x - player.absolutePosition.x;
+                                    let distancesToPlayerY = otherPlayer.absolutePosition.y - player.absolutePosition.y;
+                                    let distancesToPlayer = Math.sqrt(Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2));
+                                    let a = 1 + Math.pow(ratio, 2);
+                                    let b = (-2 * distancesToPlayerX) + (-2 * ratio * distancesToPlayerY);
+                                    let c = (Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2) - Math.pow(Player.radius, 2));
+                                    let discriminant = Math.pow(b, 2) - (4 * a * c);
+
+
+                                    if (discriminant > 0 && distancesToPlayer <= player.range) {
+                                        if ((x < 0 && distancesToPlayerX < 0) || (x > 0 && distancesToPlayerX > 0)) {
+                                            player.target_id = otherPlayer.id;
+                                            player.rotation_speed = 0;
+                                        }
+                                    }
+                                    
+                                }
+                            });                            
+                        }
+                        let target_present = false;
+                        this.players.forEach((otherPlayer, index) => {
+                            if (otherPlayer.id == player.target_id) {
+                                let distancesToPlayerX = otherPlayer.absolutePosition.x - player.absolutePosition.x;
+                                let distancesToPlayerY = otherPlayer.absolutePosition.y - player.absolutePosition.y;
+                                let distancesToPlayer = Math.sqrt(Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2));
+                                let angle = Math.acos(distancesToPlayerX / distancesToPlayer);
+                                // mirroring
+                                if (distancesToPlayerY < 0) angle = -angle;
+                                player.rotation = angle;
+
+                                target_present = true;
+                            }
+                        });
+                        if (player.target_id && !target_present) {
+                            player.radar_lo = false;
+                            player.target_id = null;
+                        }
+                    }
+
 
                     // Broadcast updated sprite lists to all players
                     socket.emit('sprites', {players: this.players, ammoBoosts: this.ammoBoosts, projectiles: this.projectiles});

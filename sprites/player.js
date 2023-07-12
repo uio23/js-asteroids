@@ -10,6 +10,9 @@ class Player {
         this.rotation = 0; // Radians
         this.rotation_speed = 0; // Radians
         this.radius = Player.radius;
+        this.radar_lo = false;
+        this.target_id = null;
+        this.range = 400;
 
         this.gameConfiguration = gameConfiguration;
 
@@ -33,8 +36,19 @@ class Player {
 
         // If the rotation is/more than one revolaton, reset it to 0
         if (Math.abs(this.rotation) >= Math.PI * 2) this.rotation = 0;
-        // Update rotation based on rotation speed change
-        this.rotation += this.rotation_speed;
+
+        if (!this.target_id) {
+          // Update rotation based on rotation speed change
+          this.rotation += this.rotation_speed;
+          if (keys.d.pressed) {
+            this.turn('right');
+          } else if (keys.a.pressed) {
+            this.turn('left');
+          } 
+          else {
+            this.decelerateTurn();
+          }
+        } 
         
         // Update player based on key states
         if (keys.r.toggled) {
@@ -50,13 +64,13 @@ class Player {
           this.decelerate();
         }
 
-        if (keys.d.pressed) {
-          this.turn('right');
-        } else if (keys.a.pressed) {
-          this.turn('left');
-        } 
-        else {
-          this.decelerateTurn();
+        
+
+        if (keys.l.toggled) {
+          this.radar_lo = true;
+        } else {
+          this.target_id = null;
+          this.radar_lo = false
         }
     }
 
