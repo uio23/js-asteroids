@@ -115,8 +115,8 @@ class Artist {
         }
 
         if (player.radar_lo) {
-            let x = Math.cos(player.rotation) * (player.range - 30);
-            let y = Math.sin(player.rotation) * (player.range - 30);
+            let x = Math.cos(player.rotation) * (player.range - Math.cos(player.rotation) * 30);
+            let y = Math.sin(player.rotation) * (player.range - Math.sin(player.rotation) * 30);
             ctx.beginPath();
             ctx.moveTo(player.position.x + Math.cos(player.rotation) * 30, player.position.y + Math.sin(player.rotation) * 30);
             ctx.lineTo(player.position.x + x, player.position.y + y);
