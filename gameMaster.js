@@ -140,17 +140,32 @@ class GameMaster {
                         this.players.forEach((otherPlayer, index) => {
                             if (otherPlayer.id == player.radar_lo.target_id) {
                                 let angle;
+                                let time_to_target;
+                                let future_distance_x;
+                                let future_distance_y;
+                                let new_angle;
                                 let distancesToPlayerX = otherPlayer.absolutePosition.x - player.absolutePosition.x;
                                 let distancesToPlayerY = player.absolutePosition.y - otherPlayer.absolutePosition.y;
                                 let distancesToPlayer = Math.sqrt(Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2));
 
                                 angle = Math.acos(distancesToPlayerX / distancesToPlayer);
+                                if (distancesToPlayerY > 0) angle = -angle;     
+                                try {
+                                    time_to_target = distancesToPlayerX / (Math.cos(angle) * this.gameConfiguration.projectile_speed + player.velocity.x);
+                                    future_distance_x = distancesToPlayerX + (otherPlayer.velocity.x * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.cos(-otherPlayer.rotation) * otherPlayer.acceleration);
+                                    future_distance_y = distancesToPlayerY + (otherPlayer.velocity.y * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.sin(-otherPlayer.rotation) * otherPlayer.acceleration);
+                                    new_angle = Math.acos((future_distance_x - time_to_target * player.velocity.x)/(time_to_target * this.gameConfiguration.projectile_speed));
+                                } catch {
+                                    time_to_target = distancesToPlayerY / (Math.cos(angle) * this.gameConfiguration.projectile_speed + player.velocity.y);
+                                    future_distance_y = distancesToPlayerY + (otherPlayer.velocity.y * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.sin(-otherPlayer.rotation) * otherPlayer.acceleration);
+                                    new_angle = Math.asin((future_distance_y - time_to_target * player.velocity.y)/(time_to_target * this.gameConfiguration.projectile_speed));
+                                }
 
-                                // Reflect along the x-axis if target is above 
-                                // ...(not if below since angle is messuared clockwise in canvas.js)
-                                if (distancesToPlayerY > 0) angle = -angle;                                
+                                if (future_distance_y > 0 ) new_angle = -new_angle;
+                            
 
-                                player.rotation = angle;
+                                player.rotation = new_angle;
+
 
                                 player.radar_lo.target_present = true;
                             }

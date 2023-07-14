@@ -157,6 +157,9 @@ const keys = {
     l: {
         toggled: false
     },
+    k: {
+        toggled: false
+    },
     digit: {
         value: 0
     },
@@ -336,6 +339,9 @@ window.addEventListener('keydown', (event) => {
             break;
         case 'KeyL':
             keys.l.toggled = !keys.l.toggled;
+            break;
+        case 'KeyK':
+            keys.k.toggled = !keys.k.toggled;
             break;
         case 'Digit1':
             keys.digit.value = 0;
