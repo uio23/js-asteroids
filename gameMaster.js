@@ -143,6 +143,7 @@ class GameMaster {
                                 let time_to_target;
                                 let future_distance_x;
                                 let future_distance_y;
+                                let future_distance_to_player;
                                 let new_angle;
                                 let distancesToPlayerX = otherPlayer.absolutePosition.x - player.absolutePosition.x;
                                 let distancesToPlayerY = player.absolutePosition.y - otherPlayer.absolutePosition.y;
@@ -150,19 +151,12 @@ class GameMaster {
 
                                 angle = Math.acos(distancesToPlayerX / distancesToPlayer);
                                 if (distancesToPlayerY > 0) angle = -angle;     
-                                try {
-                                    time_to_target = distancesToPlayerX / (Math.cos(angle) * this.gameConfiguration.projectile_speed + player.velocity.x);
-                                    future_distance_x = distancesToPlayerX + (otherPlayer.velocity.x * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.cos(-otherPlayer.rotation) * otherPlayer.acceleration);
-                                    future_distance_y = distancesToPlayerY + (otherPlayer.velocity.y * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.sin(-otherPlayer.rotation) * otherPlayer.acceleration);
-                                    new_angle = Math.acos((future_distance_x - time_to_target * player.velocity.x)/(time_to_target * this.gameConfiguration.projectile_speed));
-                                } catch {
-                                    time_to_target = distancesToPlayerY / (Math.cos(angle) * this.gameConfiguration.projectile_speed + player.velocity.y);
-                                    future_distance_y = distancesToPlayerY + (otherPlayer.velocity.y * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.sin(-otherPlayer.rotation) * otherPlayer.acceleration);
-                                    new_angle = Math.asin((future_distance_y - time_to_target * player.velocity.y)/(time_to_target * this.gameConfiguration.projectile_speed));
-                                }
-
-                                if (future_distance_y > 0 ) new_angle = -new_angle;
-                            
+                                time_to_target = distancesToPlayerX / (Math.cos(angle) * this.gameConfiguration.projectile_speed + player.velocity.x);
+                                future_distance_x = distancesToPlayerX + (otherPlayer.velocity.x * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.cos(-otherPlayer.rotation) * otherPlayer.acceleration);
+                                future_distance_y = distancesToPlayerY + (otherPlayer.velocity.y * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.sin(-otherPlayer.rotation) * otherPlayer.acceleration);
+                                future_distance_to_player = Math.sqrt(Math.pow(future_distance_x, 2) + Math.pow(future_distance_y, 2));
+                                new_angle = Math.acos(future_distance_x / future_distance_to_player);
+                                if (future_distance_y > 0) new_angle = -new_angle;    
 
                                 player.rotation = new_angle;
 
