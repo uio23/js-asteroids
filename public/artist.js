@@ -34,27 +34,28 @@ class Artist {
         }
         ctx.lineWidth = 1;
         ctx.stroke();
-        ctx.restore();
 
 
-        if (player.radar_lo) {
-            let x = Math.cos(player.rotation) * (player.range - 30);
-            let y = Math.sin(player.rotation) * (player.range - 30);
+        if (player.radar_lo.active) {
             ctx.beginPath();
-            ctx.moveTo(position.x + Math.cos(player.rotation) * 30, position.y + Math.sin(player.rotation) * 30);
-            ctx.lineTo(position.x + x, position.y + y);
+            ctx.moveTo(position.x + 30, position.y);
+            ctx.lineTo(position.x + player.radar_lo.range - 30, position.y);
             ctx.closePath();
 
-            
-            if (player.target_id) {
+
+            if (player.radar_lo.target_id) {
                 ctx.strokeStyle = '#B31312';
             } else {
                 ctx.strokeStyle = '#EA906C';
             }
+
+            
             ctx.lineWidth = 1;
             ctx.stroke();
-            
         }
+
+
+        ctx.restore();
 
 
         ctx.font = "24px sans-serif";
@@ -102,6 +103,25 @@ class Artist {
         ctx.stroke();
 
 
+        if (player.radar_lo.active) {
+            ctx.beginPath();
+            ctx.moveTo(player.position.x + 30, player.position.y);
+            ctx.lineTo(player.position.x + player.radar_lo.range - 30, player.position.y);
+            ctx.closePath();
+
+
+            if (player.radar_lo.target_id) {
+                ctx.strokeStyle = '#B31312';
+            } else {
+                ctx.strokeStyle = '#EA906C';
+            }
+
+
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+
         ctx.restore();   
 
         // Inform user if their R.C.S is toggled
@@ -112,24 +132,6 @@ class Artist {
           ctx.fillText("R.C.S ON", canvas.width/2, canvas.height - 50);
         } else {
           ctx.fillText("R.C.S OFF", canvas.width/2, canvas.height - 50);
-        }
-
-        if (player.radar_lo) {
-            let x = Math.cos(player.rotation) * (player.range - Math.cos(player.rotation) * 30);
-            let y = Math.sin(player.rotation) * (player.range - Math.sin(player.rotation) * 30);
-            ctx.beginPath();
-            ctx.moveTo(player.position.x + Math.cos(player.rotation) * 30, player.position.y + Math.sin(player.rotation) * 30);
-            ctx.lineTo(player.position.x + x, player.position.y + y);
-            ctx.closePath();
-
-            if (player.target_id) {
-                ctx.strokeStyle = '#B31312';
-            } else {
-                ctx.strokeStyle = '#EA906C';
-            }
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            
         }
 
 

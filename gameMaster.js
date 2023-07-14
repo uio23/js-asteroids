@@ -95,64 +95,68 @@ class GameMaster {
                     }
 
                     //If radar lock-on, try lock onto closes player
-                    if (player.radar_lo) {
-                        if (!player.target_id) {
-                            let gradient = Math.sin(-player.rotation) / Math.cos(-player.rotation);
+                    if (player.radar_lo.active) {
+                        if (!player.radar_lo.target_id) {
+                            let ccw_rotation = -player.rotation;
+                            let x = Math.cos(ccw_rotation);
+                            let y = Math.sin(ccw_rotation);
+                            let gradient = y / x;
 
 
                             this.players.forEach((otherPlayer, index) => {
-                                if (otherPlayer != player) {
+                                if (otherPlayer != player && otherPlayer.radar_lo.target_id != player.id) {
                                     let distancesToPlayerX = otherPlayer.absolutePosition.x - player.absolutePosition.x;
-                                    // Concider up up rather than down 
-                                    let distancesToPlayerY = (player.absolutePosition.y - otherPlayer.absolutePosition.y);
+                                    // Concider up positive - (cartesian)
+                                    let distancesToPlayerY = player.absolutePosition.y - otherPlayer.absolutePosition.y;
+
                                     // This is an absolute distance
                                     let distancesToPlayer = Math.sqrt(Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2));
-                                    
-                                    // a, b & c of a substitution equation 
-                                    // ...with the player's 'pointing line' linear equation and target as a circle equation
-                                    let a = 1 + Math.pow(gradient, 2);
-                                    let b = (-2 * distancesToPlayerX) + (-2 * gradient * distancesToPlayerY);
-                                    let c = (Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2) - Math.pow(Player.radius, 2));
-                                    // If this is positive the line passes through the target, player is pointing at target
-                                    let discriminant = Math.pow(b, 2) - (4 * a * c);
-                                    if (discriminant > 0 && distancesToPlayer <= player.range) {
-                                        if (Math.abs(player.rotation) < Math.PI / 2 && distancesToPlayerX > 0) {
-                                            player.target_id = otherPlayer.id;
-                                            player.rotation_speed = 0;
-                                        }  else if (Math.abs(player.rotation) > Math.PI / 2 && distancesToPlayerX < 0) {
-                                            player.target_id = otherPlayer.id;
-                                            player.rotation_speed = 0;
+
+
+                                    // If the other player is within range
+                                    if ((distancesToPlayer + Player.radius) <= player.radar_lo.range) {
+                                        // Find discriminant of a simultanious equation with the 
+                                        // player's lazer/line & other player's hitbox/circle
+                                        let a = 1 + Math.pow(gradient, 2);
+                                        let b = (-2 * distancesToPlayerX) + (-2 * gradient * distancesToPlayerY);
+                                        let c = (Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2) - Math.pow(Player.radius, 2));
+                                        let discriminant = Math.pow(b, 2) - (4 * a * c);
+
+
+                                        // If there's a real solution to the simultanious equation
+                                        if (discriminant > 0) {
+                                            // If the player's nose is pointing at other player
+                                            // (not back)
+                                            if (x * distancesToPlayerX > 0) {
+                                                player.radar_lo.target_id = otherPlayer.id;
+                                                player.rotation_speed = 0;
+                                            }  
                                         }
-                                               
-                                         
                                     }
-                                    
                                 }
                             });                            
                         }
-                        let target_present = false;
+                        player.radar_lo.target_present = false;
                         this.players.forEach((otherPlayer, index) => {
-                            if (otherPlayer.id == player.target_id) {
+                            if (otherPlayer.id == player.radar_lo.target_id) {
+                                let angle;
                                 let distancesToPlayerX = otherPlayer.absolutePosition.x - player.absolutePosition.x;
-                                let projectileTime = distancesToPlayerX / (Math.cos(player.rotation) * this.gameConfiguration.projectile_speed + player.velocity.x);
-                                let distanceMovedX = otherPlayer.velocity.x * projectileTime + 0.5 * otherPlayer.acceleration * Math.pow(projectileTime, 2);
-                                let distanceMovedY = otherPlayer.velocity.y * projectileTime + 0.5 * otherPlayer.acceleration * Math.pow(projectileTime, 2);
-
-                                distancesToPlayerX = otherPlayer.absolutePosition.x + distanceMovedX - player.absolutePosition.x;
-                                let distancesToPlayerY = otherPlayer.absolutePosition.y + distanceMovedY - player.absolutePosition.y;
+                                let distancesToPlayerY = player.absolutePosition.y - otherPlayer.absolutePosition.y;
                                 let distancesToPlayer = Math.sqrt(Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2));
-                                let angle = Math.acos(distancesToPlayerX / distancesToPlayer);
-                                // mirroring
-                                if (distancesToPlayerY < 0) angle = -angle;
+
+                                angle = Math.acos(distancesToPlayerX / distancesToPlayer);
+
+                                // Reflect along the x-axis if target is above 
+                                // ...(not if below since angle is messuared clockwise in canvas.js)
+                                if (distancesToPlayerY > 0) angle = -angle;                                
 
                                 player.rotation = angle;
 
-                                target_present = true;
+                                player.radar_lo.target_present = true;
                             }
                         });
-                        if (player.target_id && !target_present) {
-                                player.radar_lo = false;
-                                player.target_id = null;
+                        if (player.radar_lo.target_id && !player.radar_lo.target_present) {
+                            player.radar_lo.target_id = null;
                         }
                     }
 

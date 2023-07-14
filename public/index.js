@@ -1,9 +1,9 @@
 // Useful info
-window.onload = () => {
-    setTimeout(() => {
-        alert('Welcome to FreeSpace.\nW: Forward\nA: Turn left\nD: Turn right\nSpace: Shoort\nEXTRA:\nR: R.C.S toggle (for combat)\nL: Radar Lock-On\nCHAT:\nEnter: Focus/Send message');
-    }, 300);
-};
+//window.onload = () => {
+    //setTimeout(() => {
+      //  alert('Welcome to FreeSpace.\nW: Forward\nA: Turn left\nD: Turn right\nSpace: Shoort\nEXTRA:\nR: R.C.S toggle (for combat)\nL: Radar Lock-On\nCHAT:\nEnter: Focus/Send message');
+    //}, 300);
+//};
 
 // Initialize game canvas
 const canvas = document.querySelector('canvas');

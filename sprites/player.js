@@ -10,9 +10,6 @@ class Player {
         this.rotation = 0; // Radians
         this.rotation_speed = 0; // Radians
         this.radius = Player.radius;
-        this.radar_lo = false;
-        this.target_id = null;
-        this.range = 400;
 
         this.gameConfiguration = gameConfiguration;
 
@@ -26,6 +23,12 @@ class Player {
         this.ammo = this.fullAmmo;
         this.username = username;
         this.coins = 0;
+        this.radar_lo = {
+          active: false,
+          target_id: null,
+          target_present: false,
+          range: 300
+        }
     }
 
 
@@ -67,10 +70,10 @@ class Player {
         
 
         if (keys.l.toggled) {
-          this.radar_lo = true;
+          this.radar_lo.active = true;
         } else {
-          this.target_id = null;
-          this.radar_lo = false
+          this.radar_lo.target_id = null;
+          this.radar_lo.active = false
         }
     }
 
