@@ -113,21 +113,31 @@ socket.on('message', (message) => {
     let li = document.createElement('li');
     let span = document.createElement('span');
     let span2 = document.createElement('span');
+    let span3;
 
     li.setAttribute('class', 'message');
     span.setAttribute('style', `color: ${message.color};`);
     span.setAttribute('class', 'username');
 
-    if (message.content == "joined!") {
+    if (message.content == "joined!mon") {
         span2.setAttribute('style', 'color: green;');
-    } else if (message.content == 'left...') {
+        message.content = message.content.slice(0, -3);
+    } else if (message.content == 'left...mon') {
         span2.setAttribute('style', 'color: red;');
+        message.content = message.content.slice(0, -3);
+    } else if (message.content.includes('shot down') && message.content.includes('mon')) {
+        span2.setAttribute('style', 'color: #A076F9;');
+        span3 = document.createElement('span').appendChild(document.createTextNode(message.content.slice(10, -3)));
+        message.content = message.content.slice(0, 10);
     }
 
     span.appendChild(document.createTextNode(`[${message.username}] `))
     span2.appendChild(document.createTextNode(message.content));
     li.appendChild(span);
     li.appendChild(span2);
+    if (span3) {
+        li.appendChild(span3);
+    }
 
     chat_messages.append(li);
     chat_messages.scrollTop = chat_messages.scrollHeight;

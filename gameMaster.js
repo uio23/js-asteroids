@@ -6,14 +6,13 @@ const Projectile = require('./sprites/projectile');
 
 
 class GameMaster {
-    constructor (gameConfiguration) {
+    constructor (gameConfiguration, io) {
         this.gameConfiguration = gameConfiguration;
+        this.io = io;
 
         this.players = [];
         this.ammoBoosts = [];
         this.projectiles = [];
-
-        this.playersToReward = [];
 
 
         // Spawn in 20 ammo boosts
@@ -25,7 +24,7 @@ class GameMaster {
         }
     }
 
-    handleConnection(io, socket) {
+    handleConnection(socket) {
         // Create a new player for the connected client 
         let username = generateUsername({useRandomNumber: false});
         let playerColor = '#' + Math.floor(Math.random()*16777215).toString(16);
@@ -48,7 +47,7 @@ class GameMaster {
         // Send all game-instances game configurations data & updated player list
         socket.emit('config', {gameConfiguration: this.gameConfiguration, players: this.players});
         // Inform all game-instances of a new player
-        io.emit('message', {content: 'joined!', username: username, color: playerColor});
+        this.io.emit('message', {content: 'joined!mon', username: username, color: playerColor});
 
 
         // When client's specs recieved, center their player in their window
@@ -66,13 +65,6 @@ class GameMaster {
         // Update sprites' positions and statuses on every frame of client's game-instance
         socket.on('frame', keys => {
             this.players.forEach((player, index) => {
-                // If player is pending a reward, award it 
-                if (this.playersToReward.includes(player.id)) {
-                    player.coins += this.gameConfiguration.bounty;
-                    this.playersToReward.splice(this.playersToReward.indexOf(player.id), 1);
-                }
-
-
                 // If player belongs to connected client...
                 if (player.id == socket.id) {
                     player.update(keys);
@@ -150,15 +142,21 @@ class GameMaster {
                                 let distancesToPlayer = Math.sqrt(Math.pow(distancesToPlayerX, 2) + Math.pow(distancesToPlayerY, 2));
 
                                 angle = Math.acos(distancesToPlayerX / distancesToPlayer);
-                                if (distancesToPlayerY > 0) angle = -angle;     
+                                if (distancesToPlayerY < 0) angle = -angle;     
                                 time_to_target = distancesToPlayerX / (Math.cos(angle) * this.gameConfiguration.projectile_speed + player.velocity.x);
+                                if (player.accelerating) {
                                 future_distance_x = distancesToPlayerX + (otherPlayer.velocity.x * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.cos(-otherPlayer.rotation) * otherPlayer.acceleration);
-                                future_distance_y = distancesToPlayerY + (otherPlayer.velocity.y * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.sin(-otherPlayer.rotation) * otherPlayer.acceleration);
+                                future_distance_y = distancesToPlayerY + (-otherPlayer.velocity.y * time_to_target + 0.5 * Math.pow(time_to_target, 2) * Math.sin(-otherPlayer.rotation) * otherPlayer.acceleration);
+                                } else {
+                                    future_distance_x = distancesToPlayerX + (time_to_target * otherPlayer.velocity.x * Math.pow(this.gameConfiguration.friction, time_to_target));
+                                    future_distance_y = distancesToPlayerY + (time_to_target * -otherPlayer.velocity.y * Math.pow(this.gameConfiguration.friction, time_to_target));
+                                }
                                 future_distance_to_player = Math.sqrt(Math.pow(future_distance_x, 2) + Math.pow(future_distance_y, 2));
+                                console.log(`x: ${future_distance_x - distancesToPlayerX}, y: ${future_distance_y - distancesToPlayerY}`);
                                 new_angle = Math.acos(future_distance_x / future_distance_to_player);
-                                if (future_distance_y > 0) new_angle = -new_angle;    
+                                if (future_distance_y < 0) new_angle = -new_angle;    
 
-                                player.rotation = new_angle;
+                                player.rotation = -new_angle;
 
 
                                 player.radar_lo.target_present = true;
@@ -178,7 +176,7 @@ class GameMaster {
 
 
         socket.on('new message', (message) => {
-            io.emit('message', message);
+            this.io.emit('message', message);
         });
 
 
@@ -194,7 +192,7 @@ class GameMaster {
 
                     
                     // Inform all other game-instances of disconnection
-                    socket.broadcast.emit('message', {content: 'left...', username: player.username, color: player.color});
+                    socket.broadcast.emit('message', {content: 'left...mon', username: player.username, color: player.color});
 
 
                     console.log(`\n\nplayer left...`);
@@ -250,11 +248,24 @@ class GameMaster {
                 // Penalize user player,
                 player.coins -= this.gameConfiguration.bounty;
   
-                // save projectile's owner to reward later,
-                this.playersToReward.push(projectile.playerId);
-  
-                // and delete projectile.
+                // Reward projectile owner
+                this.players.forEach((otherPlayer, index) => {
+                    if (otherPlayer.id == projectile.playerId) {
+                        otherPlayer.coins += this.gameConfiguration.bounty;
+
+                        // Announce the event
+                        this.io.emit('message', {content: `shot down [${player.username}]mon`, username: otherPlayer.username, color: otherPlayer.color});
+                    }
+                });
+                                
+                // Delete projectile.
                 this.projectiles.splice(i, 1);
+
+                // Place user player at spawn
+                player.absolutePosition.x = this.gameConfiguration.width / 2;
+                player.absolutePosition.y = this.gameConfiguration.height / 2;
+
+                
             }
         }
     }

@@ -7,6 +7,7 @@ class Player {
         this.position = position; // {x, y}
         this.absolutePosition = absolutePosition;
         this.velocity = velocity; // {x, y}
+        this.accelerating = false;
         this.rotation = 0; // Radians
         this.rotation_speed = 0; // Radians
         this.radius = Player.radius;
@@ -61,9 +62,11 @@ class Player {
         }
 
         if (keys.w.pressed) {
+          this.accelerating = true;
           this.accelerate();
         }
         else {
+          this.accelerating = false;
           this.decelerate();
         }
 

@@ -15,7 +15,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 
-const gameMaster = new GameMaster(gameConfiguration);
+const gameMaster = new GameMaster(gameConfiguration, io);
 
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -29,7 +29,7 @@ app.use('/', (req, res) => {
 
 // Handle connection to the server
 io.on('connection', (socket) => {
-  gameMaster.handleConnection(io, socket);
+  gameMaster.handleConnection(socket);
 });
 
 
