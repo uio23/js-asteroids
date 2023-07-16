@@ -69,6 +69,21 @@ class GameMaster {
                 if (player.id == socket.id) {
                     player.update(keys);
 
+                    if (player.absolutePosition.x > this.gameConfiguration.width) {
+                        player.velocity.x = 0;
+                        player.absolutePosition.x = this.gameConfiguration.width;
+                    } else if (player.absolutePosition.x < 0) {
+                        player.velocity.x = 0;
+                        player.absolutePosition.x = 0;
+                    }
+                    if (player.absolutePosition.y > this.gameConfiguration.height) {
+                        player.velocity.y = 0;
+                        player.absolutePosition.y = this.gameConfiguration.height;
+                    } else if (player.absolutePosition.y < 0) {
+                        player.velocity.y = 0;
+                        player.absolutePosition.y = 0;
+                    }
+
 
                     // Proccess any interection client player has with any ammo boosts
                     this.updateBoosts(player);
