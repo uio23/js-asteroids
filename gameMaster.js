@@ -16,7 +16,7 @@ class GameMaster {
 
 
         // Spawn in 20 ammo boosts
-        for (let i = 1; i < 20; i++) {
+        for (let i = 1; i < 21; i++) {
             this.ammoBoosts.push(new AmmoBoost({
                 x: Math.random() * this.gameConfiguration.width - AmmoBoost.radius,
                 y: Math.random() * this.gameConfiguration.height - AmmoBoost.radius
@@ -231,6 +231,16 @@ class GameMaster {
                 // Fill player's ammo and remove ammo boost
                 player.reload();
                 this.ammoBoosts.splice(i, 1);
+            }
+        }
+
+        if (this.ammoBoosts.length <= 0) {
+            // Spawn in 20 more ammo boosts
+            for (let i = 1; i < 20; i++) {
+                this.ammoBoosts.push(new AmmoBoost({
+                    x: Math.random() * this.gameConfiguration.width - AmmoBoost.radius,
+                    y: Math.random() * this.gameConfiguration.height - AmmoBoost.radius
+                }));
             }
         }
     }
