@@ -39,7 +39,7 @@ class Artist {
         if (player.radar_lo.active) {
             ctx.beginPath();
             ctx.moveTo(position.x + 30, position.y);
-            ctx.lineTo(position.x +3000, position.y);
+            ctx.lineTo(position.x + player.radar_lo.range, position.y);
             ctx.closePath();
 
 
