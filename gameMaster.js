@@ -1,11 +1,11 @@
-const { generateUsername } = require('friendly-username-generator');
+import { generateUsername } from 'friendly-username-generator';
 
-const Player = require('./sprites/player');
-const AmmoBoost = require('./sprites/ammoBoost');
-const Projectile = require('./sprites/projectile');
+import Player from './sprites/player.js';
+import AmmoBoost from './sprites/ammoBoost.js';
+import Projectile from './sprites/projectile.js';
 
 
-class GameMaster {
+export default class GameMaster {
     constructor (gameConfiguration, io) {
         this.gameConfiguration = gameConfiguration;
         this.io = io;
@@ -295,6 +295,3 @@ class GameMaster {
         }
     }
 }
-
-
-module.exports = GameMaster;

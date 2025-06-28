@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     projectile_speed: 25,
     friction: 0.97,
     rcs_friction: 0.85,

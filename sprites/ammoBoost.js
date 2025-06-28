@@ -1,4 +1,4 @@
-class AmmoBoost {
+export default class AmmoBoost {
     static radius = 20;
     constructor(absolutePosition) {
         this.absolutePosition = absolutePosition;
@@ -6,5 +6,3 @@ class AmmoBoost {
         this.color = 'green';
     }
 }
-
-module.exports = AmmoBoost;

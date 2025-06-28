@@ -167,6 +167,9 @@ const keys = {
     l: {
         toggled: false
     },
+		s: {
+				pressed: false
+		},
     k: {
         toggled: false
     },
@@ -350,6 +353,9 @@ window.addEventListener('keydown', (event) => {
         case 'KeyL':
             keys.l.toggled = !keys.l.toggled;
             break;
+        case 'KeyS':
+            keys.s.pressed = true;
+            break;
         case 'KeyK':
             keys.k.toggled = !keys.k.toggled;
             break;
@@ -382,6 +388,9 @@ window.addEventListener('keyup', (event) => {
         case 'KeyD':
             keys.d.pressed = false;
             break;
+				case 'KeyS':
+						keys.s.pressed = false;
+						break;
         case 'Space':
             keys.space.pressed = false;
             keys.space.used = false;

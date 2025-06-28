@@ -1,13 +1,12 @@
-const path = require("path");
-const http = require('http');
+import path from "path";
+import http from "http";
 
-const express = require('express');
-const { Server } = require("socket.io");
+import express from "express";
+import { Server } from "socket.io";
 
-const GameMaster = require('./gameMaster');
+import GameMaster from "./gameMaster.js";
 
-const gameConfiguration = require('./gameConfiguration');
-
+import gameConfiguration from "./gameConfiguration.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -17,6 +16,7 @@ const io = new Server(server);
 
 const gameMaster = new GameMaster(gameConfiguration, io);
 
+const __dirname = path.resolve();
 
 app.use(express.static(path.join(__dirname, 'public')));
 
