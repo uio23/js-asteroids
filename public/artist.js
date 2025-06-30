@@ -67,10 +67,31 @@ class Artist {
 	static drawThisPlayer(ctx, canvas, player) {
 		// All draw-state changes will only affect strokes/fills up to 'restore' 
 		ctx.save();
-		for (const k in player.rcs) {
-			const thruster = player.rcs[k];
-			console.log(thruster)
-			if (k === "vertical") {
+		let Xt, yT;
+		let thruster;
+
+		for (let i in player.rcs.sideThrusters.thrusters) {
+			thruster = player.rcs.sideThrusters.thrusters[i];
+			console.log(thruster);
+			switch (thruster.angle) {
+			case 0:
+			case Math.PI:
+				Xt = thruster.thrust * 6000;
+				yT = 0;
+				break;
+			case Math.PI / 2:
+			case Math.PI * 3/2:
+				Xt = 0;
+				yT = thruster.thrust * 6000;
+			}
+			ctx.beginPath();
+			ctx.moveTo(player.position.x, player.position.y);
+			ctx.lineTo(player.position.x + Xt, player.position.y + yT);
+			ctx.strokeStyle = '#EA906C';
+			ctx.lineWidth = 1;
+			ctx.stroke();
+
+			/*
 				ctx.beginPath();
 				ctx.moveTo(player.position.x, player.position.y);
 				ctx.lineTo(player.position.x + thruster.thrust / 2 * 6000, player.position.y - thruster.thrust * 6000);
@@ -79,17 +100,7 @@ class Artist {
 				ctx.strokeStyle = '#EA906C';
 				ctx.lineWidth = 1;
 				ctx.stroke();
-			}
-			else if (k === "horizontal") {
-				ctx.beginPath();
-				ctx.moveTo(player.position.x, player.position.y);
-				ctx.lineTo(player.position.x - thruster.thrust * 6000, player.position.y + thruster.thrust / 2 * 6000);
-				ctx.lineTo(player.position.x - thruster.thrust * 6000, player.position.y - thruster.thrust / 2 * 6000);
-				ctx.closePath();
-				ctx.strokeStyle = '#EA906C';
-				ctx.lineWidth = 1;
-				ctx.stroke();
-			}
+			*/
 		}
 
 

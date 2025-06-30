@@ -1,6 +1,9 @@
 import Projectile from "./projectile.js";
+import glpk from "glpk.js";
+const glpkS = glpk();
 
 export default class Player {
+
 	static radius = 16;
 	static acceleration = 0.01;
 	static rotation_acceleration = 0.0004;
@@ -33,20 +36,30 @@ export default class Player {
 
 		this.rcs = {
 			active: false,
-			vertical:
-			{
-				thrust: 0,
-				maxThrust: 0.005
+			rotationThruster: {
+				maxThrust: 0.001,
+				thrust: 0
 			},
-			horizontal:
-			{
-				thrust: 0,
-				maxThrust: 0.005
-			},
-			rotational:
-			{
-				thrust: 0,
-				maxThrust: 0.001
+			sideThrusters: {
+				maxThrust: 0.005,
+				thrusters: [
+					{
+						angle: 0,
+						thrust: 0
+					},
+					{
+						angle: Math.PI / 2,
+						thrust: 0
+					},
+					{
+						angle: Math.PI,
+						thrust: 0
+					},
+					{
+						angle: Math.PI * 3/2,
+						thrust: 0
+					},
+				]
 			}
 		};
 
@@ -113,7 +126,7 @@ export default class Player {
 		// Update rotation by rotation velocity
 		this.rotation += this.rotation_velocity;
 		// If the rotation is/is more than one revolaton, set it to 0
-		this.rotation = this.rotation % (Math.PI * 2);
+		this.rotation = (this.rotation +(Math.PI*2)) % (Math.PI * 2);
 	}
 
 	fireThruster(thruster, velocity, to) {
@@ -124,30 +137,136 @@ export default class Player {
 	applyRCS() {
 		// If the player isn't rotating in the desired direction, break current rotation by rcs.rotation_breaks
 		if ([-Math.sign(this.rotation_direction), null].includes(this.rotation_direction)) {
-			this.fireThruster(this.rcs.rotational, this.rotation_velocity, 0);
-			this.rotation_velocity += this.rcs.rotational.thrust;
+			this.fireThruster(this.rcs.rotationThruster, this.rotation_velocity, 0);
+			this.rotation_velocity += this.rcs.rotationThruster.thrust;
 		}
 
 		// If the player isn't moving in the desired direction, break violating components of the current velocity
 		// vector by rcs.horizonatl_breaks and rcs.vertical_breaks
 		let h = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
-		let desiredX = this.accelerating ? h * Math.cos(this.rotation) : this.velocity.x;
 
-		let to;
-		if (desiredX * this.velocity.x < 0 || this.breaking) {
-			to = 0;
+		let desiredX = this.accelerating ? h * Math.cos(this.rotation) : this.velocity.x;
+		let xDiff = this.velocity.x - desiredX;
+		let desiredY = this.accelerating ? h * Math.sin(this.rotation) : this.velocity.y;
+		let yDiff = this.velocity.y - desiredY;
+		// Only apply breaking
+		let xXeffect, xYeffect = 0;
+		let yXeffect, yYeffect = 0;
+		if (Math.sign(xDiff) == Math.sign(this.velocity.x) && xDiff != 0) {
+			// Determine the best thruster to break with
+			let xThrust, difff, thrusterToUse;
+			let closestDiff = 2;
+			for (let thrusterI in this.rcs.sideThrusters.thrusters) {
+				let thruster = this.rcs.sideThrusters.thrusters[thrusterI];
+				xThrust = Math.cos(thruster.angle + this.rotation);	
+				difff = (Math.sign(xDiff) * 1) + (Math.sign(xThrust) * 1);
+				if (difff < closestDiff) {
+					closestDiff = difff;
+					thrusterToUse = thruster;
+				}
+			}
+			xXeffect = Math.cos(thrusterToUse.angle + this.rotation);
+			xYeffect = Math.sin(thrusterToUse.angle + this.rotation);
 		}
-		else if (Math.abs(desiredX) < Math.abs(this.velocity.x)) {
-			to = desiredX;
+		if (Math.sign(yDiff) == Math.sign(this.velocity.y) && yDiff != 0) {
+			let yThrust, yThrusterToUse, difff;
+			let closestDiff = 2;
+			for (let thrusterI in this.rcs.sideThrusters.thrusters) {
+				let thruster = this.rcs.sideThrusters.thrusters[thrusterI];
+				yThrust = Math.sin(thruster.angle + this.rotation);	
+				difff = (Math.sign(yDiff) * 1) + (Math.sign(yThrust) * 1);
+				if (difff < closestDiff) {
+					closestDiff = difff;
+					yThrusterToUse = thruster;
+				}
+			}
+			yXeffect = Math.cos(yThrusterToUse.angle + this.rotation);
+			yYeffect = Math.sin(yThrusterToUse.angle + this.rotation);
+		}
+		// Solve LP
+		const options = {
+			msglev: glpkS.GLP_MSG_OFF,
+			presol: true,
+			cb: {
+				call: progress => {
+
+				},
+				each: 1
+			}
+		};
+		let xb;
+		if (yDiff > 0) {
+			xb = glpkS.GLP_UP;
+		}
+		else if (yDiff < 0) {
+			xb = glpkS.GLP_LO;
 		}
 		else {
-			to = this.velocity.x;
+			xb = glpkS.GLP_FX;
 		}
-		this.fireThruster(this.rcs.horizontal, this.velocity.x, to);
-		this.velocity.x += this.rcs.horizontal.thrust;
+		let yb;
+		if (xDiff > 0) {
+			yb = glpkS.GLP_UP;
+		}
+		else if (xDiff < 0) {
+			yb = glpkS.GLP_LO;
+		}
+		else {
+			yb = glpkS.GLP_FX;
+		}
 
-		let desiredY = this.accelerating ? h * Math.sin(this.rotation) : this.velocity.y;
+		const res = glpkS.solve({
+			name: 'ThursterLP',
+			objective: {
+				direction: glpkS.GLP_MAX,
+				name: 'obj',
+				vars: [
+					{ name: 'x1', coef: Math.abs(xXeffect)},
+					{ name: 'x2', coef: Math.abs(yYeffect)}
+				]
+			},
+			subjectTo: [
+				{
+					name: 'cons1',
+					vars: [
+						{ name: 'x1', coef: 1},
+					],
+					bnds: { type: glpkS.GLP_DB, ub: Math.abs(xDiff) % this.rcs.sideThrusters.maxThrust, lb: (-1*Math.abs(xDiff)) % this.rcs.sideThrusters.maxThrust * -1 }
+				},
+				{
+					name: 'cons2',
+					vars: [
+						{ name: 'x2', coef: 1},
+					],
+					bnds: { type: glpkS.GLP_DB, ub: Math.abs(yDiff) % this.rcs.sideThrusters.maxThrust, lb: (-1*Math.abs(yDiff)) % this.rcs.sideThrusters.maxThrust * -1  }
+				},
+				{
+					name: 'cons3',
+					vars: [
+						{ name: 'x1', coef: xYeffect},
+					],
+					bnds: { type: xb, ub: 0, lb: 0 }
+				},
+				{
+					name: 'cons4',
+					vars: [
+						{ name: 'x2', coef: yXeffect},
+					],
+					bnds: { type: yb, ub: 0, lb: 0 }
+				}
+			]
+		}, options);
 
+		//console.log(res.result.vars.x1);
+		//console.log(res.result.vars.x2);
+		let xEffect = xXeffect * res.result.vars.x1 + yXeffect * res.result.vars.x2;
+		let yEffect = xYeffect * res.result.vars.x1 + yYeffect * res.result.vars.x2;
+		console.log(xEffect);
+		console.log(yEffect);
+		//this.velocity.x -= xEffect;
+		//this.velocity.y -= yEffect;
+
+		/*
 		if (desiredY * this.velocity.y < 0 || this.breaking) {
 			to = 0;
 		}
@@ -159,6 +278,7 @@ export default class Player {
 		}
 		this.fireThruster(this.rcs.vertical, this.velocity.y, to);
 		this.velocity.y += this.rcs.vertical.thrust;
+		*/
 	}
 
 	accelerate() {
