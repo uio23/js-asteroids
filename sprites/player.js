@@ -141,144 +141,176 @@ export default class Player {
 			this.rotation_velocity += this.rcs.rotationThruster.thrust;
 		}
 
-		// If the player isn't moving in the desired direction, break violating components of the current velocity
-		// vector by rcs.horizonatl_breaks and rcs.vertical_breaks
-		let h = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+		// Enter complicated rcs side thruster stuff
 
-		let desiredX = this.accelerating ? h * Math.cos(this.rotation) : this.velocity.x;
-		let xDiff = this.velocity.x - desiredX;
-		let desiredY = this.accelerating ? h * Math.sin(this.rotation) : this.velocity.y;
-		let yDiff = this.velocity.y - desiredY;
+		let velocity_magnitude = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+
+		// The desired x and y velocities are those of the velocity magnitude split to x and y by the direction of rotation
+		// if the player is accelerating, otherwise it is whatever the current x and y velocity is
+		let desiredX = this.accelerating ? velocity_magnitude * Math.cos(this.rotation) : this.velocity.x;
+		let desiredY = this.accelerating ? velocity_magnitude * Math.sin(this.rotation) : this.velocity.y;
+
+		let excessX = this.velocity.x - desiredX;
+		let excessY = this.velocity.y - desiredY;
+
+		let sinX, cosX = 0;
+		let sinY, cosY = 0;
+		let thruster, thrust, directionalSimilarity;
+		let closestDS = 0;
+
 		// Only apply breaking
-		let xXeffect, xYeffect = 0;
-		let yXeffect, yYeffect = 0;
-		if (Math.sign(xDiff) == Math.sign(this.velocity.x) && xDiff != 0) {
+		// If the x excess has a different sign to the current x velocity, 
+		// i.e. the magnitued of the desired x is greater than that of the current x, and is of the same sign,
+		// then moving closer to the desired x would be acceleration and should not happen.
+		// ...also no change needs to occure if the desired x velocity is the current x velovity
+		let thrusterToUseX;
+		if (Math.sign(excessX) != Math.sign(this.velocity.x)) {
+			excessX = 0;
+		}
+
+		if (excessX != 0) {
 			// Determine the best thruster to break with
-			let xThrust, difff, thrusterToUse;
-			let closestDiff = 2;
+			
 			for (let thrusterI in this.rcs.sideThrusters.thrusters) {
-				let thruster = this.rcs.sideThrusters.thrusters[thrusterI];
-				xThrust = Math.cos(thruster.angle + this.rotation);	
-				difff = (Math.sign(xDiff) * 1) + (Math.sign(xThrust) * 1);
-				if (difff < closestDiff) {
-					closestDiff = difff;
-					thrusterToUse = thruster;
+				thruster = this.rcs.sideThrusters.thrusters[thrusterI];
+				// This is what this thruster would add to the x velocity
+				thrust = Math.cos(thruster.angle + this.rotation);	
+
+				directionalSimilarity = (thrust - (Math.sign(excessX) * 1))**2;
+				if (directionalSimilarity > closestDS) {
+					closestDS = directionalSimilarity;
+					thrusterToUseX = thruster;
 				}
 			}
-			xXeffect = Math.cos(thrusterToUse.angle + this.rotation);
-			xYeffect = Math.sin(thrusterToUse.angle + this.rotation);
+			
+			// calculate the ration of trust the most aligned thruster would provide 
+			sinX = Math.sin(thrusterToUseX.angle + this.rotation);
+			cosX = Math.cos(thrusterToUseX.angle + this.rotation);
 		}
-		if (Math.sign(yDiff) == Math.sign(this.velocity.y) && yDiff != 0) {
-			let yThrust, yThrusterToUse, difff;
-			let closestDiff = 2;
+
+		// Same thing for the excess y velocity
+		// Reset closest directional similarity
+		closestDS = 0;
+		if (Math.sign(excessY) != Math.sign(this.velocity.y)) {
+			excessY = 0;
+		}
+		let thrusterToUseY;
+		if (excessY != 0) {
+			// Determine the best thruster to break with
 			for (let thrusterI in this.rcs.sideThrusters.thrusters) {
-				let thruster = this.rcs.sideThrusters.thrusters[thrusterI];
-				yThrust = Math.sin(thruster.angle + this.rotation);	
-				difff = (Math.sign(yDiff) * 1) + (Math.sign(yThrust) * 1);
-				if (difff < closestDiff) {
-					closestDiff = difff;
-					yThrusterToUse = thruster;
+				thruster = this.rcs.sideThrusters.thrusters[thrusterI];
+				// This is what this thruster would add to the x velocity
+				thrust = Math.sin(thruster.angle + this.rotation);	
+
+				directionalSimilarity = (thrust - (Math.sign(excessY) * 1))**2;
+				if (directionalSimilarity > closestDS) {
+					closestDS = directionalSimilarity;
+					thrusterToUseY = thruster;
 				}
 			}
-			yXeffect = Math.cos(yThrusterToUse.angle + this.rotation);
-			yYeffect = Math.sin(yThrusterToUse.angle + this.rotation);
-		}
-		// Solve LP
-		const options = {
-			msglev: glpkS.GLP_MSG_OFF,
-			presol: true,
-			cb: {
-				call: progress => {
-
-				},
-				each: 1
-			}
-		};
-		let xb;
-		if (yDiff > 0) {
-			xb = glpkS.GLP_UP;
-		}
-		else if (yDiff < 0) {
-			xb = glpkS.GLP_LO;
-		}
-		else {
-			xb = glpkS.GLP_FX;
-		}
-		let yb;
-		if (xDiff > 0) {
-			yb = glpkS.GLP_UP;
-		}
-		else if (xDiff < 0) {
-			yb = glpkS.GLP_LO;
-		}
-		else {
-			yb = glpkS.GLP_FX;
+			
+			// calculate the ration of trust the most aligned thruster would provide 
+			sinY = Math.sin(thrusterToUseY.angle + this.rotation);
+			cosY = Math.cos(thrusterToUseY.angle + this.rotation);
 		}
 
+		// Maximize xm*|sin(x) + cos(x)| + ym*|sin(y) + cos(y)| 
+		// subject to:
+		// 0 <= xm*sin(x) + ym*sin(y) <= |excessX|
+		// 0 <= xm*cos(x) + ym*cos(y) <= |excessY|
+
+		// the thruster ratios are those of the best thrusters to cancel their respective velocities,
+		// so this formula will maximize the useful breakage at any point without adverse effects
+
+		// Specifies the direction that each velocity should grow to from 0
+		// positive excess x? then we should grow our breaking velocity down to the excess from 0
+		let excessXSign = Math.sign(excessX)  >= 0 ? 0 : 1;
+		let excessYSign = Math.sign(excessY) >= 0 ? 0 : 1;
+		let typeY = excessY == 0 ? glpkS.GLP_FX : glpkS.GLP_DB;
+		let typeX = excessX == 0 ? glpkS.GLP_FX : glpkS.GLP_DB;
 		const res = glpkS.solve({
 			name: 'ThursterLP',
 			objective: {
 				direction: glpkS.GLP_MAX,
 				name: 'obj',
 				vars: [
-					{ name: 'x1', coef: Math.abs(xXeffect)},
-					{ name: 'x2', coef: Math.abs(yYeffect)}
+					{ name: '1m', coef: Math.abs(sinX) + Math.abs(cosX)},
+					{ name: 'ym', coef: Math.abs(sinY) + Math.abs(cosY)}
 				]
 			},
 			subjectTo: [
 				{
 					name: 'cons1',
 					vars: [
-						{ name: 'x1', coef: 1},
+						{ name: 'xm', coef: 1},
 					],
-					bnds: { type: glpkS.GLP_DB, ub: Math.abs(xDiff) % this.rcs.sideThrusters.maxThrust, lb: (-1*Math.abs(xDiff)) % this.rcs.sideThrusters.maxThrust * -1 }
+					bnds: { type: glpkS.GLP_UP, ub: this.rcs.sideThrusters.maxThrust, lb: 0}
 				},
 				{
 					name: 'cons2',
 					vars: [
-						{ name: 'x2', coef: 1},
+						{ name: 'ym', coef: 1},
 					],
-					bnds: { type: glpkS.GLP_DB, ub: Math.abs(yDiff) % this.rcs.sideThrusters.maxThrust, lb: (-1*Math.abs(yDiff)) % this.rcs.sideThrusters.maxThrust * -1  }
+					bnds: { type: glpkS.GLP_UP, ub: this.rcs.sideThrusters.maxThrust, lb: 0}
 				},
 				{
 					name: 'cons3',
 					vars: [
-						{ name: 'x1', coef: xYeffect},
+						{ name: 'xm', coef: sinX},
+						{ name: 'ym', coef: sinY},
 					],
-					bnds: { type: xb, ub: 0, lb: 0 }
+					bnds: { type: typeY, ub: excessYSign*Math.abs(excessY), lb: (excessYSign-1)*Math.abs(excessY)}
 				},
 				{
 					name: 'cons4',
 					vars: [
-						{ name: 'x2', coef: yXeffect},
+						{ name: 'xm', coef: cosX},
+						{ name: 'ym', coef: cosY},
 					],
-					bnds: { type: yb, ub: 0, lb: 0 }
-				}
+					bnds: { type: typeX, ub: excessXSign*Math.abs(excessX), lb: (excessXSign-1)*Math.abs(excessX)}
+				},
 			]
-		}, options);
+		}, glpkS.GLP_MSG_ERR);
+		if (desiredY != this.velocity.y && res.result.vars.ym == 0) {
+		console.log("Current x velocity is: " + this.velocity.x);
+		console.log("Desired x velocity is: " + desiredX);
+		console.log("This means the x excess is " + excessX);
+		console.log("Determined range of thrust: " + (excessXSign-1)*Math.abs(excessX) + " < x < " + excessXSign*Math.abs(excessX));
+		if (thrusterToUseX) {
+			console.log("Selecting thruster " + thrusterToUseX.angle + " at angle " + (this.rotation + thrusterToUseX.angle));
+			console.log("The maximum effect of this thruster is" + 0.1*Math.cos(thrusterToUseX.angle +this.rotation));
+			console.log("LP found that the best thrust for this thruster is: " + res.result.vars.xm);
+			console.log("This means the x effect of this thruster is " + res.result.vars.xm*Math.cos(thrusterToUseX.angle +this.rotation));
+		}
+		console.log("Current y velocity is: " + this.velocity.y);
+		console.log("Desired y velocity is: " + desiredY);
+		console.log("This means the y excess is " + excessY);
+		console.log("Determined range of thrust: " + (excessYSign-1)*Math.abs(excessY) + " < y < " + excessYSign*Math.abs(excessY));
+		console.log("Ship is rotated: " + this.rotation);
+		if (thrusterToUseY) {
+			console.log("Selecting thruster " + thrusterToUseY.angle + " at angle " + (this.rotation + thrusterToUseY.angle));
+			console.log("The maximum effect of this thruster is" + 0.1*Math.sin(thrusterToUseY.angle +this.rotation));
+			console.log("LP found that the best thrust for this thruster is: " + res.result.vars.ym);
+			console.log("This means the y effect of this thruster is " + res.result.vars.ym*Math.sin(thrusterToUseY.angle +this.rotation));
+		}
 
-		//console.log(res.result.vars.x1);
-		//console.log(res.result.vars.x2);
-		let xEffect = xXeffect * res.result.vars.x1 + yXeffect * res.result.vars.x2;
-		let yEffect = xYeffect * res.result.vars.x1 + yYeffect * res.result.vars.x2;
-		console.log(xEffect);
-		console.log(yEffect);
-		//this.velocity.x -= xEffect;
-		//this.velocity.y -= yEffect;
+		}
 
-		/*
-		if (desiredY * this.velocity.y < 0 || this.breaking) {
-			to = 0;
+		for (let i in this.rcs.sideThrusters.thrusters) {
+			let t = this.rcs.sideThrusters.thrusters[i];
+			t.thrust = 0;
 		}
-		else if (Math.abs(desiredY) < Math.abs(this.velocity.y)) {
-			to = desiredY;
+		if (thrusterToUseX) {
+			thrusterToUseX.thrust = res.result.vars.xm;
+			this.velocity.x += thrusterToUseX.thrust * Math.cos(thrusterToUseX.angle + this.rotation);
+			this.velocity.y += thrusterToUseX.thrust * Math.sin(thrusterToUseX.angle + this.rotation);
 		}
-		else {
-			to = this.velocity.y;
+		
+		if (thrusterToUseY) {
+			thrusterToUseY.thrust = res.result.vars.ym;
+			this.velocity.x += thrusterToUseY.thrust * Math.cos(thrusterToUseY.angle + this.rotation);
+			this.velocity.y += thrusterToUseY.thrust * Math.sin(thrusterToUseY.angle + this.rotation);
 		}
-		this.fireThruster(this.rcs.vertical, this.velocity.y, to);
-		this.velocity.y += this.rcs.vertical.thrust;
-		*/
 	}
 
 	accelerate() {

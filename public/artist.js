@@ -72,7 +72,10 @@ class Artist {
 
 		for (let i in player.rcs.sideThrusters.thrusters) {
 			thruster = player.rcs.sideThrusters.thrusters[i];
+			if (thruster.thrust > 0) {
 			console.log(thruster);
+
+			}
 			switch (thruster.angle) {
 			case 0:
 			case Math.PI:
@@ -86,7 +89,7 @@ class Artist {
 			}
 			ctx.beginPath();
 			ctx.moveTo(player.position.x, player.position.y);
-			ctx.lineTo(player.position.x + Xt, player.position.y + yT);
+			ctx.lineTo(player.position.x - Xt, player.position.y - yT);
 			ctx.strokeStyle = '#EA906C';
 			ctx.lineWidth = 1;
 			ctx.stroke();
