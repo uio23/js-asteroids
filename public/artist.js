@@ -79,17 +79,17 @@ class Artist {
 			switch (thruster.angle) {
 			case 0:
 			case Math.PI:
-				Xt = thruster.thrust * 6000;
+				Xt = thruster.thrust * 6000 * Math.sign(Math.cos(thruster.angle + player.rotation));
 				yT = 0;
 				break;
 			case Math.PI / 2:
 			case Math.PI * 3/2:
 				Xt = 0;
-				yT = thruster.thrust * 6000;
+				yT = thruster.thrust * 6000 * Math.sign(Math.sin(thruster.angle + player.rotation));
 			}
 			ctx.beginPath();
 			ctx.moveTo(player.position.x, player.position.y);
-			ctx.lineTo(player.position.x - Xt, player.position.y - yT);
+			ctx.lineTo(player.position.x - Xt, player.position.y + yT);
 			ctx.strokeStyle = '#EA906C';
 			ctx.lineWidth = 1;
 			ctx.stroke();
