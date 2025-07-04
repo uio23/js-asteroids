@@ -284,11 +284,11 @@ export default class Player {
 		console.log("Desired y velocity is: " + desiredY);
 		console.log("This means the y excess is " + excessY);
 		console.log("Determined range of thrust: " + (excessYSign-1)*Math.abs(excessY) + " < y < " + excessYSign*Math.abs(excessY));
-		*/
 		console.log(res.result.vars.x0);
 		console.log(res.result.vars.x90);
 		console.log(res.result.vars.x180);
 		console.log(res.result.vars.x270);
+		*/
 
 		// Apply the calculated optimal thrust
 		this.rcs.sideThrusters.thrusters[0].thrust = res.result.vars.x0;
