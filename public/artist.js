@@ -67,44 +67,35 @@ class Artist {
 	static drawThisPlayer(ctx, canvas, player) {
 		// All draw-state changes will only affect strokes/fills up to 'restore' 
 		ctx.save();
-		let Xt, yT;
-		let thruster;
 
-		for (let i in player.rcs.sideThrusters.thrusters) {
-			thruster = player.rcs.sideThrusters.thrusters[i];
-			if (thruster.thrust > 0) {
-			console.log(thruster);
+		// Draw the magnitude of each rcs side thruster as a triangle, scaled by 6000
+		let thrusterXleft, thrusterXright, thrusterYleft, thrusterYright;
+		for (let thruster of player.rcs.sideThrusters.thrusters) {
+			thrusterXleft = thruster.thrust * 6000 * Math.cos(thruster.angle + player.rotation + 10);
+			thrusterYleft = thruster.thrust * 6000 * Math.sin(thruster.angle + player.rotation + 10);
+			thrusterXright = thruster.thrust * 6000 * Math.cos(thruster.angle + player.rotation - 10);
+			thrusterYright = thruster.thrust * 6000 * Math.sin(thruster.angle + player.rotation - 10);
+			console.log(thruster.thrust);
 
-			}
-			switch (thruster.angle) {
-			case 0:
-			case Math.PI:
-				Xt = thruster.thrust * 6000 * Math.sign(Math.cos(thruster.angle + player.rotation));
-				yT = 0;
-				break;
-			case Math.PI / 2:
-			case Math.PI * 3/2:
-				Xt = 0;
-				yT = thruster.thrust * 6000 * Math.sign(Math.sin(thruster.angle + player.rotation));
-			}
 			ctx.beginPath();
 			ctx.moveTo(player.position.x, player.position.y);
-			ctx.lineTo(player.position.x - Xt, player.position.y + yT);
-			ctx.strokeStyle = '#EA906C';
+			ctx.lineTo(player.position.x + thrusterXleft, player.position.y + thrusterYleft);
+			ctx.lineTo(player.position.x + thrusterXright, player.position.y + thrusterYright);
+			ctx.closePath();
+			// Yellowish red
+			ctx.strokeStyle = '#E3DE61';
 			ctx.lineWidth = 1;
 			ctx.stroke();
-
-			/*
-				ctx.beginPath();
-				ctx.moveTo(player.position.x, player.position.y);
-				ctx.lineTo(player.position.x + thruster.thrust / 2 * 6000, player.position.y - thruster.thrust * 6000);
-				ctx.lineTo(player.position.x - thruster.thrust / 2 * 6000, player.position.y - thruster.thrust * 6000);
-				ctx.closePath();
-				ctx.strokeStyle = '#EA906C';
-				ctx.lineWidth = 1;
-				ctx.stroke();
-			*/
 		}
+
+		// Draw the direction and magnitude of the players velocity, scaled by 50
+		ctx.beginPath();
+		ctx.moveTo(player.position.x, player.position.y);
+		ctx.lineTo(player.position.x + player.velocity.x*50, player.position.y + player.velocity.y*50);
+		// Blue
+		ctx.strokeStyle = '#006A71';
+		ctx.lineWidth = 1;
+		ctx.stroke();
 
 
 		// Translate canvas origin to center of player

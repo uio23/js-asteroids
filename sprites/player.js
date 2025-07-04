@@ -41,7 +41,11 @@ export default class Player {
 				thrust: 0
 			},
 			sideThrusters: {
-				maxThrust: 0.01,
+				maxThrust: 0.005,
+				effect: {
+					x: 0,
+					y: 0
+				},
 				thrusters: [
 					{
 						angle: 0,
@@ -111,7 +115,11 @@ export default class Player {
 
 		// RCS
 		if (this.rcs.active) {
-			this.applyRCS()
+			this.calcRCS()
+
+			this.rotation_velocity += this.rcs.rotationThruster.thrust;
+			this.velocity.x += this.rcs.sideThrusters.effect.x;
+			this.velocity.y += this.rcs.sideThrusters.effect.y;
 		}
 
 		// Radar
@@ -127,146 +135,146 @@ export default class Player {
 		this.rotation += this.rotation_velocity;
 		// If the rotation is/is more than one revolaton, set it to 0
 		this.rotation = (this.rotation +(Math.PI*2)) % (Math.PI * 2);
+
 	}
 
-	fireThruster(thruster, velocity, to) {
-		let diff = Math.abs(velocity) - Math.abs(to);
-		thruster.thrust = diff > thruster.maxThrust ? Math.sign(velocity) * -1 * thruster.maxThrust : Math.sign(velocity) * -1 * diff;
-	}
-
-	applyRCS() {
+	calcRCS() {
 		// If the player isn't rotating in the desired direction, break current rotation by rcs.rotation_breaks
 		if ([-Math.sign(this.rotation_direction), null].includes(this.rotation_direction)) {
-			this.fireThruster(this.rcs.rotationThruster, this.rotation_velocity, 0);
-			this.rotation_velocity += this.rcs.rotationThruster.thrust;
+			let diff = Math.abs(this.rotation_velocity) - 0;
+			this.rcs.rotationThruster.thrust = diff > this.rcs.rotationThruster.maxThrust ? Math.sign(this.rotation_velocity) * -1 * this.rcs.rotationThruster.maxThrust : Math.sign(this.rotation_velocity) * -1 * diff;
 		}
 
-		// Enter complicated rcs side thruster stuff
+		// Enter complicated rcs side thruster stuff:
 
-		let velocity_magnitude = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+		// Remove thrust and do not recalc if the player is not accelerating
+		if (!this.accelerating) {
+			for (const thruster of this.rcs.sideThrusters.thrusters) {
+				thruster.thrust = 0;
+			}
+			this.rcs.sideThrusters.effect.x = 0;
+			this.rcs.sideThrusters.effect.y = 0;
+			return;
+		}
 
 		// The desired x and y velocities are those of the velocity magnitude split to x and y by the direction of rotation
 		// if the player is accelerating, otherwise it is whatever the current x and y velocity is
+		let velocity_magnitude = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
 		let desiredX = this.accelerating ? velocity_magnitude * Math.cos(this.rotation) : this.velocity.x;
 		let desiredY = this.accelerating ? velocity_magnitude * Math.sin(this.rotation) : this.velocity.y;
 
 		let excessX = this.velocity.x - desiredX;
 		let excessY = this.velocity.y - desiredY;
 
-		// Only apply breaking
-		if (Math.sign(this.velocity.x) != Math.sign(excessX)) {
-			excessX = 0;
-		}
-		if (Math.sign(this.velocity.y) != Math.sign(excessY)) {
-			excessY = 0;
+		const excessXSign = Math.sign(excessX);
+		const excessYSign = Math.sign(excessY);
+
+		// If the breaking is in the right direction, don't recalc
+		if (Math.sign(this.rcs.sideThrusters.effect.x) *-1 == excessXSign && Math.sign(this.rcs.sideThrusters.effect.y) *-1 == excessYSign) {
+			return;
 		}
 
-		let excessXSign, excessYSign;
-		let typeX = glpkS.GLP_DB;
-		let typeY = glpkS.GLP_DB;
-		if (Math.sign(excessX) > 0) {
-			excessXSign = 0;
+		// The breaking thrusters should thrust in the direction opposite to that of the excesses
+		let xThrustDirection = excessXSign * -1;
+		let yThrustDirection = excessYSign * -1;
+		// But do not accelerate either velocity
+		// (acceleration is when the desired velocity is a greate absolute value of the same sign as that of the current velocity)
+		if (Math.sign(this.velocity.x) != excessXSign) {
+			xThrustDirection = 0;
 		}
-		else if (Math.sign(excessX) <= 0) {
-			excessXSign = 1;
-			if (excessX == 0) {
-				typeY = glpkS.GLP_FX;
-			}
+		if (Math.sign(this.velocity.y) != excessYSign) {
+			yThrustDirection = 0;
 		}
-		if (Math.sign(excessY) > 0) {
-			excessYSign = 0;
+
+		// These varibles regulate the direction of the x and y velocity contraints in lp
+		let boundX, boundY;
+
+		// These become fixed bounds for a velocity value that should not change
+		let boundTypeX = glpkS.GLP_DB;
+		let boundTypeY = glpkS.GLP_DB;
+
+		if (excessXSign > 0) {
+			boundX = 0;
 		}
-		else if (Math.sign(excessY) <= 0) {
-			excessYSign = 1;
-			if (excessY == 0) {
-				typeY = glpkS.GLP_FX;
+		else if (excessXSign <= 0) {
+			boundX = 1;
+			if (excessXSign == 0) {
+				boundTypeX = glpkS.GLP_FX;
 			}
 		}
 
+		if (excessYSign > 0) {
+			boundY = 0;
+		}
+		else if (excessYSign <= 0) {
+			boundY = 1;
+			if (excessYSign == 0) {
+				boundTypeY = glpkS.GLP_FX;
+			}
+		}
+
+		// Calculate the cos/sin ratios of all the rcs thrusters are their angles
 		const sin0 = Math.sin(this.rcs.sideThrusters.thrusters[0].angle + this.rotation);
 		const sin90 = Math.sin(this.rcs.sideThrusters.thrusters[1].angle + this.rotation);
 		const sin180 = Math.sin(this.rcs.sideThrusters.thrusters[2].angle + this.rotation);
-		const sin360 = Math.sin(this.rcs.sideThrusters.thrusters[3].angle + this.rotation);
+		const sin270 = Math.sin(this.rcs.sideThrusters.thrusters[3].angle + this.rotation);
 		const cos0 = Math.cos(this.rcs.sideThrusters.thrusters[0].angle + this.rotation);
 		const cos90 = Math.cos(this.rcs.sideThrusters.thrusters[1].angle + this.rotation);
 		const cos180 = Math.cos(this.rcs.sideThrusters.thrusters[2].angle + this.rotation);
-		const cos360 = Math.cos(this.rcs.sideThrusters.thrusters[3].angle + this.rotation);
+		const cos270 = Math.cos(this.rcs.sideThrusters.thrusters[3].angle + this.rotation);
 
 		const res = glpkS.solve({
 			name: 'ThursterLP',
 			objective: {
 				direction: glpkS.GLP_MAX,
 				name: 'obj',
+				// Maximize the velocity effect of each rcs side truster into the desired direction
 				vars: [
-					{ name: 'x0', coef: Math.abs(sin0 + cos0)},
-					{ name: 'x90', coef: Math.abs(sin90 + cos90)},
-					{ name: 'x180', coef: Math.abs(sin180 + cos180)},
-					{ name: 'x360', coef: Math.abs(sin360 + cos360)},
+					{ name: 'x0', coef: yThrustDirection * sin0 + xThrustDirection * cos0},
+					{ name: 'x90', coef: yThrustDirection * sin90 + xThrustDirection * cos90},
+					{ name: 'x180', coef: yThrustDirection * sin180 + xThrustDirection * cos180},
+					{ name: 'x270', coef: yThrustDirection * sin270 + xThrustDirection * cos270},
 				]
 			},
 			subjectTo: [
+				// 0 / |excess x| <= the combined rcs thrusters' effect on x velocity <= 0 / -|excess x|
+				// Insures that rcs's effect on the x velocity is within the desired range
+				// This may instead be set to = 0 if excess x is 0
 				{
-					name: 'cons1',
-					vars: [
-						{ name: 'x0', coef: 1},
-					],
-					bnds: { type: glpkS.GLP_UP, ub: this.rcs.sideThrusters.maxThrust, lb: 0}
-				},
-				{
-					name: 'cons2',
-					vars: [
-						{ name: 'x90', coef: 1},
-					],
-					bnds: { type: glpkS.GLP_UP, ub: this.rcs.sideThrusters.maxThrust, lb: 0}
-				},
-				{
-					name: 'cons3',
-					vars: [
-						{ name: 'x180', coef: 1},
-					],
-					bnds: { type: glpkS.GLP_UP, ub: this.rcs.sideThrusters.maxThrust, lb: 0}
-				},
-				{
-					name: 'cons4',
-					vars: [
-						{ name: 'x360', coef: 1},
-					],
-					bnds: { type: glpkS.GLP_UP, ub: this.rcs.sideThrusters.maxThrust, lb: 0}
-				},
-				{
-					name: 'cons5',
-					vars: [
-						{ name: 'x0', coef: sin0},
-						{ name: 'x90', coef: sin90},
-					],
-					bnds: { type: typeY, ub: excessYSign*Math.abs(excessY), lb: (excessYSign-1)*Math.abs(excessY)}
-				},
-				{
-					name: 'cons6',
-					vars: [
-						{ name: 'x180', coef: sin180},
-						{ name: 'x360', coef: sin360},
-					],
-					bnds: { type: typeY, ub: excessYSign*Math.abs(excessY), lb: (excessYSign-1)*Math.abs(excessY)}
-				},
-				{
-					name: 'cons7',
+					name: 'X velocity effect',
 					vars: [
 						{ name: 'x0', coef: cos0},
 						{ name: 'x90', coef: cos90},
-					],
-					bnds: { type: typeX, ub: excessXSign*Math.abs(excessX), lb: (excessXSign-1)*Math.abs(excessY)}
-				},
-				{
-					name: 'cons8',
-					vars: [
 						{ name: 'x180', coef: cos180},
-						{ name: 'x360', coef: cos360},
+						{ name: 'x270', coef: cos270},
 					],
-					bnds: { type: typeX, ub: excessXSign*Math.abs(excessX), lb: (excessXSign-1)*Math.abs(excessY)}
-				}
+					bnds: { type: boundTypeX, ub: boundX*Math.abs(excessX), lb: (boundX-1)*Math.abs(excessX)}
+				},
+				// 0 / |excess y| <= the combined rcs thrusters' effect on y velocity <= 0 / -|excess y|
+				// Insures that rcs's effect on the y velocity is within the desired range
+				// This may instead be set to = 0 if excess y is 0
+				{
+					name: 'Y velocity effect',
+					vars: [
+						{ name: 'x0', coef: sin0},
+						{ name: 'x90', coef: sin90},
+						{ name: 'x180', coef: sin180},
+						{ name: 'x270', coef: sin270},
+					],
+					bnds: { type: boundTypeY, ub: boundY*Math.abs(excessY), lb: (boundY-1)*Math.abs(excessY)}
+				},
+			],
+			// Each thruster's output is bound above by its maximum thrust
+			bounds: [
+				{ name: 'x0', type: glpkS.GLP_DB, ub: this.rcs.sideThrusters.maxThrust, lb: 0},
+				{ name: 'x90', type: glpkS.GLP_DB, ub: this.rcs.sideThrusters.maxThrust, lb: 0},
+				{ name: 'x180', type: glpkS.GLP_DB, ub: this.rcs.sideThrusters.maxThrust, lb: 0},
+				{ name: 'x270', type: glpkS.GLP_DB, ub: this.rcs.sideThrusters.maxThrust, lb: 0}
 			]
-		}, glpkS.GLP_MSG_ERR);
+		}, glpkS.GLP_MSG_ERR); // Only log errors
+
+		// Debugging outputs
+		/*
 		console.log("\nShip is rotated: " + this.rotation);
 		console.log("Current x velocity is: " + this.velocity.x);
 		console.log("Desired x velocity is: " + desiredX);
@@ -276,19 +284,24 @@ export default class Player {
 		console.log("Desired y velocity is: " + desiredY);
 		console.log("This means the y excess is " + excessY);
 		console.log("Determined range of thrust: " + (excessYSign-1)*Math.abs(excessY) + " < y < " + excessYSign*Math.abs(excessY));
+		*/
 		console.log(res.result.vars.x0);
 		console.log(res.result.vars.x90);
 		console.log(res.result.vars.x180);
-		console.log(res.result.vars.x360);
+		console.log(res.result.vars.x270);
 
+		// Apply the calculated optimal thrust
 		this.rcs.sideThrusters.thrusters[0].thrust = res.result.vars.x0;
 		this.rcs.sideThrusters.thrusters[1].thrust = res.result.vars.x90;
 		this.rcs.sideThrusters.thrusters[2].thrust = res.result.vars.x180;
-		this.rcs.sideThrusters.thrusters[3].thrust = res.result.vars.x360;
+		this.rcs.sideThrusters.thrusters[3].thrust = res.result.vars.x270;
 
+		// Recalculate the effect of rcs on the velocity
+		this.rcs.sideThrusters.effect.x = 0;
+		this.rcs.sideThrusters.effect.y = 0;
 		for (const thruster of this.rcs.sideThrusters.thrusters) {
-			this.velocity.x += thruster.thrust * Math.cos(thruster.angle + this.rotation);
-			this.velocity.y += thruster.thrust * Math.sin(thruster.angle + this.rotation);
+			this.rcs.sideThrusters.effect.x += thruster.thrust * Math.cos(this.rotation + thruster.angle);	
+			this.rcs.sideThrusters.effect.y += thruster.thrust * Math.sin(this.rotation + thruster.angle);	
 		}
 	}
 
